@@ -1,8 +1,0 @@
-[
-  { "price": 16999, "isLand": false, "isFhb": false, "expectedDuty": 212 },
-  { "price": 17000, "isLand": false, "isFhb": false, "expectedDuty": 212 },
-  { "price": 36999, "isLand": false, "isFhb": false, "expectedDuty": 512 },
-  { "price": 37000, "isLand": false, "isFhb": false, "expectedDuty": 512 },
-  { "price": 799999, "isLand": false, "isFhb": true,  "expectedDuty": 0 },
-  { "price": 800000, "isLand": false, "isFhb": true,  "expectedDuty": 0 }
-]
