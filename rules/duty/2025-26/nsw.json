@@ -1,0 +1,42 @@
+{
+  "jurisdiction": "NSW",
+  "rules_version": "2025.07.01-NSW-v1",
+  "effective_from": "2025-07-01",
+  "effective_to": "2026-06-30",
+  "rounding": "nearest_dollar",
+  "modes": {
+    "established": {
+      "schedule": [
+        { "lower_inclusive": 0, "upper_exclusive": 17000, "base": 0, "marginal_rate": 0.0125, "applies_above": 0 },
+        { "lower_inclusive": 17000, "upper_exclusive": 37000, "base": 212, "marginal_rate": 0.015, "applies_above": 17000 },
+        { "lower_inclusive": 37000, "upper_exclusive": 99000, "base": 512, "marginal_rate": 0.0175, "applies_above": 37000 },
+        { "lower_inclusive": 99000, "upper_exclusive": 372000, "base": 1597, "marginal_rate": 0.035, "applies_above": 99000 },
+        { "lower_inclusive": 372000, "upper_exclusive": 1240000, "base": 11152, "marginal_rate": 0.045, "applies_above": 372000 },
+        { "lower_inclusive": 1240000, "upper_exclusive": 3721000, "base": 50212, "marginal_rate": 0.055, "applies_above": 1240000 },
+        { "lower_inclusive": 3721000, "upper_exclusive": null, "base": 186667, "marginal_rate": 0.07, "applies_above": 3721000 }
+      ]
+    },
+    "land": { "inherits": "established" }
+  },
+  "fhb": {
+    "enabled": true,
+    "rules": [
+      {
+        "property_type": "established",
+        "full_exemption_upto": 800000,
+        "concession_to": 1000000,
+        "concession_formula": "linear",
+        "notes": "Homes ≤ $800k exempt; linear concession to $1.0m."
+      },
+      {
+        "property_type": "land",
+        "full_exemption_upto": 350000,
+        "concession_to": 450000,
+        "concession_formula": "linear",
+        "notes": "Vacant land ≤ $350k exempt; concession to $450k."
+      }
+    ]
+  },
+  "surcharges": { "foreign_buyer": { "enabled": false, "rate": 0.00, "base": "dutiable_value", "caps_or_thresholds": [] } },
+  "notes": "NSW duty table + FHB thresholds for 2025–26."
+}
