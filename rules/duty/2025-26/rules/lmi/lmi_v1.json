@@ -1,0 +1,37 @@
+{
+  "rules_version": "2025.07.01-LMI-v1",
+  "effective_from": "2025-07-01",
+  "effective_to": null,
+  "rounding": "nearest_dollar",
+  "bands": [
+    {
+      "loan_min": 0,
+      "loan_max": 300000,
+      "lvr_brackets": [
+        { "lvr_min": 0.80, "lvr_max": 0.85, "rate": 0.0100 },
+        { "lvr_min": 0.85, "lvr_max": 0.90, "rate": 0.0175 },
+        { "lvr_min": 0.90, "lvr_max": 0.95, "rate": 0.0300 }
+      ]
+    },
+    {
+      "loan_min": 300000,
+      "loan_max": 500000,
+      "lvr_brackets": [
+        { "lvr_min": 0.80, "lvr_max": 0.85, "rate": 0.0080 },
+        { "lvr_min": 0.85, "lvr_max": 0.90, "rate": 0.0150 },
+        { "lvr_min": 0.90, "lvr_max": 0.95, "rate": 0.0250 }
+      ]
+    },
+    {
+      "loan_min": 500000,
+      "loan_max": 1000000,
+      "lvr_brackets": [
+        { "lvr_min": 0.80, "lvr_max": 0.85, "rate": 0.0060 },
+        { "lvr_min": 0.85, "lvr_max": 0.90, "rate": 0.0130 },
+        { "lvr_min": 0.90, "lvr_max": 0.95, "rate": 0.0210 }
+      ]
+    }
+  ],
+  "caps": { "max_lvr": 0.95, "min_lvr_for_lmi": 0.80 },
+  "notes": "Indicative insurer-style rates for estimation."
+}
