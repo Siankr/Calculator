@@ -1,11 +1,23 @@
 const fs = require("fs");
 const path = require("path");
 
-function loadNSW(contractDate) {
-  const p = path.join(__dirname, "..", "rules", "duty", "2025-26", "nsw.json");
-  const data = JSON.parse(fs.readFileSync(p, "utf8"));
-  // For multi-period, pick by date. We have one period here.
-  return data;
+// --- Load rules by state (2025-26). Extend the map as you add more states.
+function loadRules(state, contractDate) {
+  const fileMap = {
+    NSW: "nsw.json",
+    VIC: "vic.json",
+    // QLD: "qld.json",
+    // WA:  "wa.json",
+    // SA:  "sa.json",
+    // TAS: "tas.json",
+    // ACT: "act.json",
+    // NT:  "nt.json"
+  };
+  const key = String(state || "").toUpperCase();
+  const file = fileMap[key];
+  if (!file) throw new Error(`Unsupported state: ${state}`);
+  const p = path.join(__dirname, "..", "rules", "duty", "2025-26", file);
+  return JSON.parse(fs.readFileSync(p, "utf8"));
 }
 
 function pickSchedule(rules, isLand) {
@@ -18,9 +30,12 @@ function pickSchedule(rules, isLand) {
 }
 
 function calcBaseDuty(price, schedule) {
-  // find tier where price ∈ [lower, upper)
-  const tier = schedule.schedule.find(t => t.upper_exclusive === null ? price >= t.lower_inclusive : (price >= t.lower_inclusive && price < t.upper_exclusive));
-  if (!tier) throw new Error("No duty tier matched");
+  const tier = schedule.schedule.find(t =>
+    t.upper_exclusive === null
+      ? price >= t.lower_inclusive
+      : price >= t.lower_inclusive && price < t.upper_exclusive
+  );
+  if (!tier) throw new Error("No duty tier matched (check schedule)");
   const amount = tier.base + tier.marginal_rate * (price - tier.applies_above);
   return amount;
 }
@@ -43,12 +58,18 @@ function roundNearestDollar(x) {
   return Math.round(x);
 }
 
-function calcDutyNSW({ price, isLand=false, isFhb=false, contractDate="2025-10-10" }) {
-  const rules = loadNSW(contractDate);
+// Generic calculator (state-aware)
+function calcDuty({ state = "NSW", price, isLand = false, isFhb = false, contractDate = "2025-10-10" }) {
+  const rules = loadRules(state, contractDate);
   const schedule = pickSchedule(rules, isLand);
   const base = calcBaseDuty(price, schedule);
   const withFhb = applyFHB(price, base, rules, isLand, isFhb);
   return roundNearestDollar(withFhb);
 }
 
-module.exports = { calcDutyNSW };
+// Backward-compatible NSW wrapper (keeps existing tests working)
+function calcDutyNSW(args) {
+  return calcDuty({ state: "NSW", ...args });
+}
+
+module.exports = { calcDuty, calcDutyNSW };
