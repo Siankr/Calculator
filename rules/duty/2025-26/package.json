@@ -1,0 +1,10 @@
+{
+  "name": "purchasing-power",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "scripts": {
+    "examples": "node src/run_examples.js",
+    "test": "node tests/run_tests.js"
+  },
+  "engines": { "node": ">=18" }
+}
