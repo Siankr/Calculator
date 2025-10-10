@@ -20,12 +20,19 @@ function loadRules(state, contractDate) {
   return JSON.parse(fs.readFileSync(p, "utf8"));
 }
 
-function pickSchedule(rules, isLand) {
-  const land = rules.modes.land;
+function pickSchedule(rules, { state, isLand, isPpr, price }) {
   if (isLand) {
+    const land = rules.modes.land;
     if (land && land.schedule) return land;
     if (land && land.inherits && rules.modes[land.inherits]) return rules.modes[land.inherits];
+    return rules.modes.established;
   }
+
+  // VIC PPR concession applies only up to $550,000; beyond that use standard
+  if (isPpr && String(state).toUpperCase() === "VIC" && price <= 550000 && rules.modes.ppr) {
+    return rules.modes.ppr;
+  }
+
   return rules.modes.established;
 }
 
@@ -59,9 +66,9 @@ function roundNearestDollar(x) {
 }
 
 // Generic calculator (state-aware)
-function calcDuty({ state = "NSW", price, isLand = false, isFhb = false, contractDate = "2025-10-10" }) {
+function calcDuty({ state = "NSW", price, isLand = false, isPpr = false, isFhb = false, contractDate = "2025-10-10" }) {
   const rules = loadRules(state, contractDate);
-  const schedule = pickSchedule(rules, isLand);
+  const schedule = pickSchedule(rules, { state, isLand, isPpr, price });
   const base = calcBaseDuty(price, schedule);
   const withFhb = applyFHB(price, base, rules, isLand, isFhb);
   return roundNearestDollar(withFhb);
