@@ -6,7 +6,7 @@ function loadRules(state, contractDate) {
   const fileMap = {
     NSW: "nsw.json",
     VIC: "vic.json",
-    // QLD: "qld.json",
+    QLD: "qld.json",
     // WA:  "wa.json",
     // SA:  "sa.json",
     // TAS: "tas.json",
