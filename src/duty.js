@@ -62,35 +62,70 @@ function applyFHB(price, baseDuty, rules, isLand, isFhb, { state, isPpr }) {
   const fhbRule = (rules.fhb.rules || []).find(r => r.property_type === type);
   if (!fhbRule) return baseDuty;
 
-  const { full_exemption_upto, concession_to, concession_formula, step_amount, step_interval, rebate_base_reference } = fhbRule;
+  const {
+    full_exemption_upto,
+    concession_to,
+    concession_formula,
+    step_amount,
+    step_interval,
+    rebate_base_reference
+  } = fhbRule;
 
-  // Full exemption threshold
+  // 1) Full exemption threshold (all states that have it)
   if (price <= (full_exemption_upto ?? 0)) return 0;
 
-  // Linear phase-out (e.g., NSW, VIC)
+  // 2) Linear phase-out (e.g., NSW, VIC)
   if (concession_formula === "linear" && concession_to && price < concession_to) {
     const ratio = (concession_to - price) / (concession_to - full_exemption_upto);
     return baseDuty * (1 - ratio);
   }
 
-  // Full-at-or-below threshold only, no concession above (simple pass-through)
+  // 3) “Full at/below” only (no concession above)
   if (concession_formula === "full_at_or_below_threshold") {
-    return baseDuty; // already handled the <= threshold case above
+    return baseDuty; // already handled ≤ threshold above
   }
 
-  // QLD: step_10k_rebate (stub)
-  // Logic outline (to implement later):
-  // - compute duty using rebate_base_reference schedule (usually "ppr")
-  // - compute steps = ceil((price - 700k)/10k)
-  // - rebate = max(0, max_rebate - steps * 1,735)
-  // - duty = max(0, duty_base - rebate)
-  if (concession_formula === "step_10k_rebate") {
-    // STUB for now: return baseDuty unchanged above threshold
-    return baseDuty;
+  // 4) QLD: step_10k_rebate
+  // Rebate applies against duty calculated under the referenced schedule (usually "ppr"),
+  // starting from the duty at the full exemption threshold, then reducing by a fixed amount
+  // ($1,735) per $10k above $700k, until $800k (duty never < 0).
+  if (concession_formula === "step_10k_rebate" && concession_to && price < concession_to) {
+    // Choose the reference schedule (e.g., "ppr") to compute the duty to be rebated
+    const refMode = rules.modes[rebate_base_reference] || rules.modes.established;
+    if (!refMode || !refMode.schedule) return baseDuty;
+
+    // Helper: duty using an explicit schedule object
+    const dutyFromSchedule = (p) => {
+      const tier = refMode.schedule.find(t =>
+        t.upper_exclusive === null ? p >= t.lower_inclusive : (p >= t.lower_inclusive && p < t.upper_exclusive)
+      );
+      if (!tier) throw new Error("No duty tier matched for rebate reference schedule");
+      return tier.base + tier.marginal_rate * (p - tier.applies_above);
+    };
+
+    // Duty at current price under the reference (home-concession) schedule
+    const dutyAtPriceRef = dutyFromSchedule(price);
+
+    // Maximum rebate equals the duty (under the reference schedule) at the exemption threshold
+    const maxRebate = dutyFromSchedule(full_exemption_upto);
+
+    // Number of $10k steps above the threshold (ceil so any $1 over counts as a full step)
+    const steps = Math.ceil((price - full_exemption_upto) / (step_interval || 10000));
+
+    // Rebate tapers down by $1,735 per $10k step
+    const rebate = Math.max(0, maxRebate - steps * (step_amount || 1735));
+
+    // Net duty cannot be negative
+    const net = Math.max(0, dutyAtPriceRef - rebate);
+
+    // Return the rounded result (rounding also happens at the very end, but safe to return raw)
+    return net;
   }
 
+  // 5) Past the concession range → no FHB reduction
   return baseDuty;
 }
+
 
 function roundNearestDollar(x) {
   return Math.round(x);
