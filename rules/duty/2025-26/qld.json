@@ -1,32 +1,62 @@
 {
   "jurisdiction": "QLD",
-  "rules_version": "2025.07.01-QLD-v0",
+  "rules_version": "2025.07.01-QLD-v1",
   "effective_from": "2025-07-01",
   "effective_to": "2026-06-30",
   "rounding": "nearest_dollar",
+
   "modes": {
-    "established": { "schedule": [] },
+    "established": {
+      "schedule": [
+        { "lower_inclusive": 0, "upper_exclusive": 5000, "base": 0, "marginal_rate": 0.0, "applies_above": 0 },
+        { "lower_inclusive": 5000, "upper_exclusive": 75000, "base": 0, "marginal_rate": 0.015, "applies_above": 5000 },
+        { "lower_inclusive": 75000, "upper_exclusive": 540000, "base": 1050, "marginal_rate": 0.035, "applies_above": 75000 },
+        { "lower_inclusive": 540000, "upper_exclusive": 1000000, "base": 17325, "marginal_rate": 0.045, "applies_above": 540000 },
+        { "lower_inclusive": 1000000, "upper_exclusive": null, "base": 38025, "marginal_rate": 0.0575, "applies_above": 1000000 }
+      ],
+      "notes": "QLD general transfer duty (non-home) schedule."
+    },
+
+    "ppr": {
+      "schedule": [
+        { "lower_inclusive": 0, "upper_exclusive": 350000, "base": 0, "marginal_rate": 0.01, "applies_above": 0 },
+        { "lower_inclusive": 350000, "upper_exclusive": 540000, "base": 3500, "marginal_rate": 0.035, "applies_above": 350000 },
+        { "lower_inclusive": 540000, "upper_exclusive": 1000000, "base": 10150, "marginal_rate": 0.045, "applies_above": 540000 },
+        { "lower_inclusive": 1000000, "upper_exclusive": null, "base": 30850, "marginal_rate": 0.0575, "applies_above": 1000000 }
+      ],
+      "notes": "QLD home concession composite schedule (owner-occupier)."
+    },
+
     "land": { "inherits": "established" }
   },
+
   "fhb": {
     "enabled": true,
     "rules": [
       {
         "property_type": "established",
-        "full_exemption_upto": 0,
-        "concession_to": 0,
-        "concession_formula": "none",
-        "notes": "Populate with QLD FHB logic if applicable"
+        "full_exemption_upto": 700000,
+        "concession_to": 800000,
+        "concession_formula": "step_10k_rebate",
+        "step_amount": 1735,
+        "step_interval": 10000,
+        "rebate_base_reference": "ppr", 
+        "notes": "FHB established homes: full exemption ≤ $700k; concessional rebate (decreasing by $1,735 per $10k) up to $800k. Rebate offsets duty calculated at home-concession (ppr) rates."
       },
       {
         "property_type": "land",
-        "full_exemption_upto": 0,
-        "concession_to": 0,
-        "concession_formula": "none",
-        "notes": "Populate with QLD FHB logic if applicable"
+        "full_exemption_upto": 500000,
+        "concession_to": 500000,
+        "concession_formula": "full_at_or_below_threshold",
+        "rebate_base_reference": "established",
+        "notes": "FHB vacant land: (Pre–May 2025 thresholds shown for backward compatibility); from 1 May 2025 QRO provides full concession for first-home vacant land with no cap—handled in a later step."
       }
     ]
   },
-  "surcharges": { "foreign_buyer": { "enabled": false, "rate": 0.00, "base": "dutiable_value", "caps_or_thresholds": [] } },
-  "notes": "Placeholder QLD rules; will populate real slabs next."
+
+  "surcharges": {
+    "foreign_buyer": { "enabled": true, "rate": 0.08, "base": "dutiable_value", "caps_or_thresholds": [], "notes": "Additional foreign acquirer duty (AFAD) 8%." }
+  },
+
+  "notes": "General (non-home) schedule aligns with QLD tiers; home concession (PPR) composite schedule applies for owner-occupiers; FHB rules: established ≤$700k full, taper to $800k; new-home/vacant-land full concession from 1 May 2025 will be wired in next step."
 }
