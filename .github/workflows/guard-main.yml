@@ -1,0 +1,29 @@
+name: Guard main (soft)
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  block-direct-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail if this push to main isn't from a PR merge
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.sha;
+
+            // Find PRs associated with this commit SHA
+            const prs = await github.request(
+              "GET /repos/{owner}/{repo}/commits/{ref}/pulls",
+              { owner, repo, ref: sha, mediaType: { previews: ["groot"] } }
+            );
+
+            if (!prs.data || prs.data.length === 0) {
+              core.setFailed("Direct push to main detected. Please open a Pull Request and merge.");
+            } else {
+              core.notice(`OK: merged via PR #${prs.data[0].number}`);
+            }
