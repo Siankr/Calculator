@@ -21,7 +21,7 @@ jobs:
           node-version: '20'
 
       - name: Run unit tests (no npm)
-        run: node rules/duty/2025-26/tests/run_tests.js
+        run: node tests/run_tests.js
 
       - name: Run examples (smoke)
-        run: node rules/duty/2025-26/src/run_examples.js
+        run: node src/run_examples.js
