@@ -28,13 +28,21 @@ function pickSchedule(rules, { state, isLand, isPpr, price }) {
     return rules.modes.established;
   }
 
-  // VIC PPR concession applies only up to $550,000; beyond that use standard
-  if (isPpr && String(state).toUpperCase() === "VIC" && price <= 550000 && rules.modes.ppr) {
+  const st = String(state).toUpperCase();
+
+  // VIC PPR concession only up to $550k
+  if (isPpr && st === "VIC" && price <= 550000 && rules.modes.ppr) {
+    return rules.modes.ppr;
+  }
+
+  // QLD home concession (PPR) has no $ cap in our encoded schedule
+  if (isPpr && st === "QLD" && rules.modes.ppr) {
     return rules.modes.ppr;
   }
 
   return rules.modes.established;
 }
+
 
 function calcBaseDuty(price, schedule) {
   const tier = schedule.schedule.find(t =>
@@ -47,17 +55,40 @@ function calcBaseDuty(price, schedule) {
   return amount;
 }
 
-function applyFHB(price, baseDuty, rules, isLand, isFhb) {
+function applyFHB(price, baseDuty, rules, isLand, isFhb, { state, isPpr }) {
   if (!isFhb || !rules.fhb || !rules.fhb.enabled) return baseDuty;
+
   const type = isLand ? "land" : "established";
   const fhbRule = (rules.fhb.rules || []).find(r => r.property_type === type);
   if (!fhbRule) return baseDuty;
-  const { full_exemption_upto, concession_to, concession_formula } = fhbRule;
-  if (price <= full_exemption_upto) return 0;
-  if (concession_to && price < concession_to && concession_formula === "linear") {
+
+  const { full_exemption_upto, concession_to, concession_formula, step_amount, step_interval, rebate_base_reference } = fhbRule;
+
+  // Full exemption threshold
+  if (price <= (full_exemption_upto ?? 0)) return 0;
+
+  // Linear phase-out (e.g., NSW, VIC)
+  if (concession_formula === "linear" && concession_to && price < concession_to) {
     const ratio = (concession_to - price) / (concession_to - full_exemption_upto);
     return baseDuty * (1 - ratio);
   }
+
+  // Full-at-or-below threshold only, no concession above (simple pass-through)
+  if (concession_formula === "full_at_or_below_threshold") {
+    return baseDuty; // already handled the <= threshold case above
+  }
+
+  // QLD: step_10k_rebate (stub)
+  // Logic outline (to implement later):
+  // - compute duty using rebate_base_reference schedule (usually "ppr")
+  // - compute steps = ceil((price - 700k)/10k)
+  // - rebate = max(0, max_rebate - steps * 1,735)
+  // - duty = max(0, duty_base - rebate)
+  if (concession_formula === "step_10k_rebate") {
+    // STUB for now: return baseDuty unchanged above threshold
+    return baseDuty;
+  }
+
   return baseDuty;
 }
 
@@ -70,7 +101,7 @@ function calcDuty({ state = "NSW", price, isLand = false, isPpr = false, isFhb =
   const rules = loadRules(state, contractDate);
   const schedule = pickSchedule(rules, { state, isLand, isPpr, price });
   const base = calcBaseDuty(price, schedule);
-  const withFhb = applyFHB(price, base, rules, isLand, isFhb);
+  const withFhb = applyFHB(price, base, rules, isLand, isFhb, { state, isPpr });
   return roundNearestDollar(withFhb);
 }
 
