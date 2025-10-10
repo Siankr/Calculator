@@ -9,27 +9,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show repo layout (pre-setup)
+      - name: Show repo layout
         run: |
-          echo "Node/NPM before setup (may be empty):"
-          node -v || true
-          npm -v || true
-          echo "Working dir:"
           pwd
-          echo "Top-level files:"
           ls -la
           echo "Tree:"
-          ls -R || true
+          ls -R
 
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install deps
-        run: npm ci || npm install
+      - name: Run unit tests (no npm)
+        run: node tests/run_tests.js
 
-      - name: Show package.json
-        run: cat package.json || true
-
-      - name: Run tests
-        run: npm test
+      - name: Run examples (smoke)
+        run: node src/run_examples.js
