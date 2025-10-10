@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 function loadNSW(contractDate) {
-  const p = path.join(__dirname, "..", "nsw.json");
+  const p = path.join(__dirname, "..", "rules", "duty", "2025-26", "nsw.json");
   const data = JSON.parse(fs.readFileSync(p, "utf8"));
   // For multi-period, pick by date. We have one period here.
   return data;
