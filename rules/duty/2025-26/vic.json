@@ -1,6 +1,6 @@
 {
   "jurisdiction": "VIC",
-  "rules_version": "2025.07.01-VIC-v1",
+  "rules_version": "2025.07.01-VIC-v2",
   "effective_from": "2025-07-01",
   "effective_to": "2026-06-30",
   "rounding": "nearest_dollar",
@@ -14,6 +14,15 @@
         { "lower_inclusive": 2000000, "upper_exclusive": null, "base": 110000, "marginal_rate": 0.0650, "applies_above": 2000000 }
       ]
     },
+    "ppr": {
+      "schedule": [
+        { "lower_inclusive": 0, "upper_exclusive": 25000, "base": 0, "marginal_rate": 0.0140, "applies_above": 0 },
+        { "lower_inclusive": 25000, "upper_exclusive": 130000, "base": 350, "marginal_rate": 0.0240, "applies_above": 25000 },
+        { "lower_inclusive": 130000, "upper_exclusive": 440000, "base": 2870, "marginal_rate": 0.0500, "applies_above": 130000 },
+        { "lower_inclusive": 440000, "upper_exclusive": 550000, "base": 18370, "marginal_rate": 0.0600, "applies_above": 440000 }
+      ],
+      "notes": "PPR concession applies up to $550,000. Above this, standard established rates apply."
+    },
     "land": { "inherits": "established" }
   },
   "fhb": {
@@ -24,7 +33,7 @@
         "full_exemption_upto": 600000,
         "concession_to": 750000,
         "concession_formula": "linear",
-        "notes": "Homes ≤ $600k exempt; concessional duty from $600,001–$750,000."
+        "notes": "Homes ≤ $600k exempt; concessional duty $600,001–$750,000."
       },
       {
         "property_type": "land",
@@ -36,5 +45,5 @@
     ]
   },
   "surcharges": { "foreign_buyer": { "enabled": false, "rate": 0.00, "base": "dutiable_value", "caps_or_thresholds": [] } },
-  "notes": "Implements VIC general (non-PPR) rates; PPR concessional schedule (≤$550k) will be added in the next step."
+  "notes": "VIC general rates + PPR concession up to $550k. Source: SRO VIC PPR concession table."
 }
