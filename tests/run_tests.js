@@ -102,6 +102,23 @@ const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 153
   assertEqual(got3, 48830, 'SA $1,000,000');
 }
 
+// ---------- TAS boundary checks ----------
+{
+  // 1) Exact lower threshold at $3,000 → flat $50
+  const got1 = calcDuty({ state: 'TAS', price: 3000 });
+  assertEqual(got1, 50, 'TAS $3,000 exact');
+
+  // 2) Crossover just above $725,000 (+$100)
+  // Base 27,810 + 4.5% of 100 = 27,810 + 4.5 = 27,814.5 → rounds to $27,815
+  const got2 = calcDuty({ state: 'TAS', price: 725100 });
+  assertEqual(got2, 27815, 'TAS $725,100 crossover');
+
+  // 3) Top bracket example at $1,000,000
+  // Base 27,810 + 4.5% of (1,000,000 - 725,000 = 275,000) = 12,375 → total 40,185
+  const got3 = calcDuty({ state: 'TAS', price: 1000000 });
+  assertEqual(got3, 40185, 'TAS $1,000,000');
+}
+
 
 // --- Summary & exit ---
 const okAll =
