@@ -24,7 +24,7 @@
     "fhb_home_metro": {
       "schedule": [
         { "lower_inclusive": 0, "upper_exclusive": 500000, "base": 0, "marginal_rate": 0.0, "applies_above": 0 },
-        { "lower_inclusive": 500000, "upper_exclusive": 700000, "base": 0, "marginal_rate": 0.1363, "applies_above": 500000 }
+        { "lower_inclusive": 500000, "upper_exclusive": null, "base": 0, "marginal_rate": 0.1363, "applies_above": 500000 }
       ],
       "notes": "FHOR for homes in Metropolitan & Peel regions: nil ≤$500k; $13.63 per $100 from $500k–$700k."
     },
@@ -32,7 +32,7 @@
     "fhb_home_nonmetro": {
       "schedule": [
         { "lower_inclusive": 0, "upper_exclusive": 500000, "base": 0, "marginal_rate": 0.0, "applies_above": 0 },
-        { "lower_inclusive": 500000, "upper_exclusive": 750000, "base": 0, "marginal_rate": 0.1189, "applies_above": 500000 }
+        { "lower_inclusive": 500000, "upper_exclusive": null, "base": 0, "marginal_rate": 0.1189, "applies_above": 500000 }
       ],
       "notes": "FHOR for homes outside Metro/Peel: nil ≤$500k; $11.89 per $100 from $500k–$750k."
     },
@@ -40,7 +40,7 @@
     "fhb_land": {
       "schedule": [
         { "lower_inclusive": 0, "upper_exclusive": 350000, "base": 0, "marginal_rate": 0.0, "applies_above": 0 },
-        { "lower_inclusive": 350000, "upper_exclusive": 450000, "base": 0, "marginal_rate": 0.1539, "applies_above": 350000 }
+        { "lower_inclusive": 350000, "upper_exclusive": null, "base": 0, "marginal_rate": 0.1539, "applies_above": 350000 }
       ],
       "notes": "FHOR for vacant land (statewide): nil ≤$350k; $15.39 per $100 from $350k–$450k."
     }
