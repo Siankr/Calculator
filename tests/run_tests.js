@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { calcDutyNSW, calcDuty } = require("../src/duty");
+const { loadStateRules, calcDutyFromBrackets } = require('../src/duty');
 
 // --- NSW golden tests (unchanged) ---
 const testsPath = path.join(__dirname, "golden_nsw.json");
