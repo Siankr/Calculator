@@ -71,49 +71,16 @@ function pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region }) {
 }
 
 
-// schedule may be:
-//  - an ARRAY of rows
-//  - an OBJECT with schedule: ARRAY
-//  - an OBJECT with schedule: { brackets: ARRAY }
-//  - an OBJECT with brackets: ARRAY
-function calcBaseDuty(schedule, price) {
-  let rows0 = [];
-
-  if (Array.isArray(schedule)) {
-    rows0 = schedule;
-  } else if (schedule && Array.isArray(schedule.schedule)) {
-    rows0 = schedule.schedule;
-  } else if (schedule && schedule.schedule && Array.isArray(schedule.schedule.brackets)) {
-    rows0 = schedule.schedule.brackets;
-  } else if (schedule && Array.isArray(schedule.brackets)) {
-    rows0 = schedule.brackets;
-  }
-
-  if (!rows0.length) {
-    throw new Error('Empty or invalid schedule');
-  }
-
-  // Normalise keys: prefer 'to', fall back to 'up_to'/'max'/'ceiling'
-  const rows = rows0.map(r => ({
-    to: r.to ?? r.up_to ?? r.max ?? r.ceiling ?? null,
-    base: Number(r.base ?? 0),
-    rate: Number(r.rate ?? 0)
-  }));
-
-  // Find tier (null 'to' = open-ended)
-  let idx = rows.findIndex(r => r.to == null || price <= r.to);
-  if (idx === -1) idx = rows.length - 1;
-
-  // Lower bound = previous tier's 'to' (or 0)
-  const lower = Number(rows[idx - 1]?.to ?? 0);
-
-  // Base + marginal on amount above lower bound
-  const tier = rows[idx];
-  const duty = tier.base + tier.rate * (price - lower);
-
-  return Math.round(duty);
+function calcBaseDuty(price, schedule) {
+  const tier = schedule.schedule.find(t =>
+    t.upper_exclusive === null
+      ? price >= t.lower_inclusive
+      : price >= t.lower_inclusive && price < t.upper_exclusive
+  );
+  if (!tier) throw new Error("No duty tier matched (check schedule)");
+  const amount = tier.base + tier.marginal_rate * (price - tier.applies_above);
+  return amount;
 }
-
 
 function applyFHB(price, baseDuty, rules, isLand, isFhb, { state, isPpr }) {
   if (!isFhb || !rules.fhb || !rules.fhb.enabled) return baseDuty;
