@@ -77,33 +77,32 @@ const waLand400 = calcDuty({ state: "WA", price: 400000, isLand: true, isFhb: tr
 const waLand450 = calcDuty({ state: "WA", price: 450000, isLand: true, isFhb: true }); // (100k)*0.1539 = 15,390
 const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 15390);
 
-// ---------- SA boundary tests (disabled until SA rules are ready) ----------
-// (Enable when rules/duty/2025-26/sa.json is filled and meta.status="ready")
-//
-// test('SA duty: lower threshold exact', () => {
-//   const sa = loadStateRules('sa');
-//   const price = 0; // TODO: set exact threshold
-//   const got = calcDutyFromBrackets(price, sa.general);
-//   const expected = 0; // TODO: set expected
-//   assertEqual(got, expected, 'SA lower threshold');
-// });
-//
-// test('SA duty: bracket crossover', () => {
-//   const sa = loadStateRules('sa');
-//   const price = 0; // TODO: threshold + 1
-//   const got = calcDutyFromBrackets(price, sa.general);
-//   const expected = 0; // TODO
-//   assertEqual(got, expected, 'SA crossover');
-// });
-//
-// test('SA duty: high value (top bracket)', () => {
-//   const sa = loadStateRules('sa');
-//   const price = 1000000; // example
-//   const got = calcDutyFromBrackets(price, sa.general);
-//   const expected = 0; // TODO
-//   assertEqual(got, expected, 'SA top bracket');
-// });
+// ---------- SA boundary tests (enabled) ----------
+test('SA duty: exact lower threshold at $12,000', () => {
+  const sa = loadStateRules('sa');
+  const price = 12000;
+  const got = calcDutyFromBrackets(price, sa.general);
+  const expected = 120; // 1% of 12,000
+  assertEqual(got, expected, 'SA $12,000 exact');
+});
 
+test('SA duty: crossover just above $300,000 (+$100)', () => {
+  const sa = loadStateRules('sa');
+  const price = 300100; // $100 over 300k so we avoid $/100 "part thereof" ambiguity
+  const got = calcDutyFromBrackets(price, sa.general);
+  // Base at 300k = 11,330; marginal 5% on (100) = 5; total 11,335
+  const expected = 11335;
+  assertEqual(got, expected, 'SA $300,100 crossover');
+});
+
+test('SA duty: top bracket example at $1,000,000', () => {
+  const sa = loadStateRules('sa');
+  const price = 1000000;
+  const got = calcDutyFromBrackets(price, sa.general);
+  // Base at 500k = 21,330; marginal 5.5% on (1,000,000 - 500,000 = 500,000) = 27,500; total 48,830
+  const expected = 48830;
+  assertEqual(got, expected, 'SA $1,000,000');
+});
 
 // --- Summary & exit ---
 const okAll =
