@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { calcDutyNSW, calcDuty, calcDutyFromBrackets } = require('../src/duty');
 const { calcDutyFromBrackets } = require('../src/duty'); // keep as-is if already present
 
 // Simple assertion helper used by SA checks
