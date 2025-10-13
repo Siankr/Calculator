@@ -1,6 +1,6 @@
 {
   "jurisdiction": "WA",
-  "rules_version": "2025.07.01-WA-v1",
+  "rules_version": "2025.07.01-WA-v2",
   "effective_from": "2025-07-01",
   "effective_to": "2026-06-30",
   "rounding": "nearest_dollar",
@@ -14,22 +14,43 @@
         { "lower_inclusive": 360000, "upper_exclusive": 725000, "base": 11115, "marginal_rate": 0.0475, "applies_above": 360000 },
         { "lower_inclusive": 725000, "upper_exclusive": null, "base": 28453, "marginal_rate": 0.0515, "applies_above": 725000 }
       ],
-      "fhb_home_metro": { "schedule": [], "notes": "WA FHOR—Metro/Peel schedule (to be populated)" },
-      "fhb_home_nonmetro": { "schedule": [], "notes": "WA FHOR—Outside Metro schedule (to be populated)" }
-
       "notes": "WA general transfer duty schedule (Duties Act 2008 Sch 2)."
     },
-    "land": { "inherits": "established" }
+
+    "ppr": { "inherits": "established" },
+
+    "land": { "inherits": "established" },
+
+    "fhb_home_metro": {
+      "schedule": [
+        { "lower_inclusive": 0, "upper_exclusive": 500000, "base": 0, "marginal_rate": 0.0, "applies_above": 0 },
+        { "lower_inclusive": 500000, "upper_exclusive": 700000, "base": 0, "marginal_rate": 0.1363, "applies_above": 500000 }
+      ],
+      "notes": "FHOR for homes in Metropolitan & Peel regions: nil ≤$500k; $13.63 per $100 from $500k–$700k."
+    },
+
+    "fhb_home_nonmetro": {
+      "schedule": [
+        { "lower_inclusive": 0, "upper_exclusive": 500000, "base": 0, "marginal_rate": 0.0, "applies_above": 0 },
+        { "lower_inclusive": 500000, "upper_exclusive": 750000, "base": 0, "marginal_rate": 0.1189, "applies_above": 500000 }
+      ],
+      "notes": "FHOR for homes outside Metro/Peel: nil ≤$500k; $11.89 per $100 from $500k–$750k."
+    },
+
+    "fhb_land": {
+      "schedule": [
+        { "lower_inclusive": 0, "upper_exclusive": 350000, "base": 0, "marginal_rate": 0.0, "applies_above": 0 },
+        { "lower_inclusive": 350000, "upper_exclusive": 450000, "base": 0, "marginal_rate": 0.1539, "applies_above": 350000 }
+      ],
+      "notes": "FHOR for vacant land (statewide): nil ≤$350k; $15.39 per $100 from $350k–$450k."
+    }
   },
 
-  "fhb": {
-    "enabled": false,
-    "rules": []
-  },
+  "fhb": { "enabled": false, "rules": [] },
 
   "surcharges": {
-    "foreign_buyer": { "enabled": true, "rate": 0.07, "base": "dutiable_value", "caps_or_thresholds": [], "notes": "Foreign transfer duty 7% under s205O." }
+    "foreign_buyer": { "enabled": true, "rate": 0.07, "base": "dutiable_value", "caps_or_thresholds": [], "notes": "Foreign transfer duty 7%." }
   },
 
-  "notes": "General slabs per Duties Act 2008, Schedule 2; first home owner rate changed from 21 Mar 2025 and will be wired later with regional thresholds."
+  "notes": "General slabs per Duties Act 2008 Sch 2. FHOR thresholds/rates from RevenueWA fact sheet (as at 17 Jul 2025)."
 }
