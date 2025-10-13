@@ -77,30 +77,33 @@ const waLand400 = calcDuty({ state: "WA", price: 400000, isLand: true, isFhb: tr
 const waLand450 = calcDuty({ state: "WA", price: 450000, isLand: true, isFhb: true }); // (100k)*0.1539 = 15,390
 const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 15390);
 
-// ---------- SA boundary tests (enable once rules are marked ready) ----------
+// ---------- SA boundary tests (disabled until SA rules are ready) ----------
+// (Enable when rules/duty/2025-26/sa.json is filled and meta.status="ready")
+//
 // test('SA duty: lower threshold exact', () => {
-const sa = loadStateRules('sa');
-const price = /* paste threshold value, e.g., 12500 */;
-const got = calcDutyFromBrackets(price, sa.general);
-const expected = /* exact expected duty at threshold */;
-assertEqual(got, expected, 'SA lower threshold');
-});
+//   const sa = loadStateRules('sa');
+//   const price = 0; // TODO: set exact threshold
+//   const got = calcDutyFromBrackets(price, sa.general);
+//   const expected = 0; // TODO: set expected
+//   assertEqual(got, expected, 'SA lower threshold');
+// });
+//
+// test('SA duty: bracket crossover', () => {
+//   const sa = loadStateRules('sa');
+//   const price = 0; // TODO: threshold + 1
+//   const got = calcDutyFromBrackets(price, sa.general);
+//   const expected = 0; // TODO
+//   assertEqual(got, expected, 'SA crossover');
+// });
+//
+// test('SA duty: high value (top bracket)', () => {
+//   const sa = loadStateRules('sa');
+//   const price = 1000000; // example
+//   const got = calcDutyFromBrackets(price, sa.general);
+//   const expected = 0; // TODO
+//   assertEqual(got, expected, 'SA top bracket');
+// });
 
-test('SA duty: bracket crossover', () => {
-const sa = loadStateRules('sa');
-const price = /* just $1 over a bracket edge */;
-const got = calcDutyFromBrackets(price, sa.general);
-const expected = /* manual calc */;
-assertEqual(got, expected, 'SA crossover');
-});
-
-test('SA duty: high value (top bracket)', () => {
-const sa = loadStateRules('sa');
-const price = /* e.g., 1_000_000 */;
-const got = calcDutyFromBrackets(price, sa.general);
-const expected = /* manual calc using base+rate */;
-assertEqual(got, expected, 'SA top bracket');
-});
 
 // --- Summary & exit ---
 const okAll =
