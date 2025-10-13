@@ -4,9 +4,8 @@
     "financial_year": "2025-26",
     "status": "ready",
     "notes": [
-      "Shaped to match engine: modes.established.schedule is an ARRAY.",
-      "Each row has both 'to' and 'max' (same value) for upper bound compatibility.",
-      "Land inherits established."
+      "Matches engine row schema used by WA: lower_inclusive, upper_exclusive, base, marginal_rate, applies_above.",
+      "Land mode inherits established so isLand works the same way as other states."
     ]
   },
   "modes": {
@@ -14,15 +13,15 @@
       "currency": "AUD",
       "round": "nearest_dollar",
       "schedule": [
-        { "to": 12000,  "max": 12000,  "base": 0,     "rate": 0.01  },
-        { "to": 30000,  "max": 30000,  "base": 120,   "rate": 0.02  },
-        { "to": 50000,  "max": 50000,  "base": 480,   "rate": 0.03  },
-        { "to": 100000, "max": 100000, "base": 1080,  "rate": 0.035 },
-        { "to": 200000, "max": 200000, "base": 2830,  "rate": 0.04  },
-        { "to": 250000, "max": 250000, "base": 6830,  "rate": 0.0425 },
-        { "to": 300000, "max": 300000, "base": 8955,  "rate": 0.0475 },
-        { "to": 500000, "max": 500000, "base": 11330, "rate": 0.05  },
-        { "to": null,   "max": null,   "base": 21330, "rate": 0.055 }
+        { "lower_inclusive": 0,      "upper_exclusive": 12000,  "base": 0,     "marginal_rate": 0.01,  "applies_above": 0 },
+        { "lower_inclusive": 12000,  "upper_exclusive": 30000,  "base": 120,   "marginal_rate": 0.02,  "applies_above": 12000 },
+        { "lower_inclusive": 30000,  "upper_exclusive": 50000,  "base": 480,   "marginal_rate": 0.03,  "applies_above": 30000 },
+        { "lower_inclusive": 50000,  "upper_exclusive": 100000, "base": 1080,  "marginal_rate": 0.035, "applies_above": 50000 },
+        { "lower_inclusive": 100000, "upper_exclusive": 200000, "base": 2830,  "marginal_rate": 0.04,  "applies_above": 100000 },
+        { "lower_inclusive": 200000, "upper_exclusive": 250000, "base": 6830,  "marginal_rate": 0.0425,"applies_above": 200000 },
+        { "lower_inclusive": 250000, "upper_exclusive": 300000, "base": 8955,  "marginal_rate": 0.0475,"applies_above": 250000 },
+        { "lower_inclusive": 300000, "upper_exclusive": 500000, "base": 11330, "marginal_rate": 0.05,  "applies_above": 300000 },
+        { "lower_inclusive": 500000, "upper_exclusive": null,   "base": 21330, "marginal_rate": 0.055, "applies_above": 500000 }
       ]
     },
     "land": {
