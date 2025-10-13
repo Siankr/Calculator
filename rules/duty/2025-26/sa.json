@@ -4,24 +4,30 @@
     "financial_year": "2025-26",
     "status": "ready",
     "notes": [
-      "Official SA duty scale (progressive, base + marginal)."
+      "Official SA duty scale (progressive, base + marginal).",
+      "Shaped to match engine expectation: modes.established.schedule + modes.land inherits established."
     ]
   },
-  "general": {
+  "modes": {
     "established": {
-      "currency": "AUD",
-      "round": "nearest_dollar",
-      "brackets": [
-        { "up_to": 12000,  "base": 0,     "rate": 0.01  },
-        { "up_to": 30000,  "base": 120,   "rate": 0.02  },
-        { "up_to": 50000,  "base": 480,   "rate": 0.03  },
-        { "up_to": 100000, "base": 1080,  "rate": 0.035 },
-        { "up_to": 200000, "base": 2830,  "rate": 0.04  },
-        { "up_to": 250000, "base": 6830,  "rate": 0.0425 },
-        { "up_to": 300000, "base": 8955,  "rate": 0.0475 },
-        { "up_to": 500000, "base": 11330, "rate": 0.05  },
-        { "up_to": null,   "base": 21330, "rate": 0.055 }
-      ]
+      "schedule": {
+        "currency": "AUD",
+        "round": "nearest_dollar",
+        "brackets": [
+          { "up_to": 12000,  "base": 0,     "rate": 0.01  },
+          { "up_to": 30000,  "base": 120,   "rate": 0.02  },
+          { "up_to": 50000,  "base": 480,   "rate": 0.03  },
+          { "up_to": 100000, "base": 1080,  "rate": 0.035 },
+          { "up_to": 200000, "base": 2830,  "rate": 0.04  },
+          { "up_to": 250000, "base": 6830,  "rate": 0.0425 },
+          { "up_to": 300000, "base": 8955,  "rate": 0.0475 },
+          { "up_to": 500000, "base": 11330, "rate": 0.05  },
+          { "up_to": null,   "base": 21330, "rate": 0.055 }
+        ]
+      }
+    },
+    "land": {
+      "inherits": "established"
     }
   }
 }
