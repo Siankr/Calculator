@@ -87,21 +87,21 @@ const waLand400 = calcDuty({ state: "WA", price: 400000, isLand: true, isFhb: tr
 const waLand450 = calcDuty({ state: "WA", price: 450000, isLand: true, isFhb: true }); // (100k)*0.1539 = 15,390
 const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 15390);
 
-/* ===== SA boundary checks =====
+// ---------- SA boundary checks ----------
 {
   // 1) Exact lower threshold at $12,000
   const got1 = calcDuty({ state: 'SA', price: 12000 });
   assertEqual(got1, 120, 'SA $12,000 exact');
 
   // 2) Crossover just above $300,000 (+$100)
-  const got2 = calcDuty({ state: 'SA', price: 300100 });
+  const got2 = calcDuty({ state: 'SA', price: 300100 }); // base 11,330 + 5% of 100 = 11,335
   assertEqual(got2, 11335, 'SA $300,100 crossover');
 
   // 3) Top bracket example at $1,000,000
-  const got3 = calcDuty({ state: 'SA', price: 1000000 });
+  const got3 = calcDuty({ state: 'SA', price: 1000000 }); // base 21,330 + 5.5% of 500,000 = 48,830
   assertEqual(got3, 48830, 'SA $1,000,000');
 }
-===== end SA tests ===== */
+
 
 // --- Summary & exit ---
 const okAll =
