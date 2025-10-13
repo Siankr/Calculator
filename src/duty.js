@@ -9,7 +9,7 @@ function loadRules(state, contractDate) {
   QLD: "qld.json",
   WA:  "wa.json",
   SA:  "sa.json",
-  // TAS: "tas.json",
+  TAS: "tas.json",
   // ACT: "act.json",
   // NT:  "nt.json"
 };
