@@ -83,7 +83,11 @@ const waLand450 = calcDuty({ state: "WA", price: 450000, isLand: true, isFhb: tr
 const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 15390);
 
 // ---------- SA boundary checks ----------
-{
+;(() => {
+  // We assume at the top of the file you already have:
+  // const { loadStateRules, calcDutyFromBrackets } = require('../src/duty');
+  // and assertEqual(...) is already defined and used by the NSW/VIC/QLD/WA checks.
+
   const sa = loadStateRules('sa');
 
   // Exact lower threshold at $12,000
@@ -96,7 +100,7 @@ const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 153
 
   // Crossover just above $300,000 (+$100)
   {
-    const price = 300100;
+    const price = 300100; // $100 over 300k
     const got = calcDutyFromBrackets(price, sa.general);
     // Base at 300k = 11,330; marginal 5% on 100 = 5 → 11,335
     const expected = 11335;
@@ -111,8 +115,7 @@ const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 153
     const expected = 48830;
     assertEqual(got, expected, 'SA $1,000,000');
   }
-}
-
+})();
 
 // --- Summary & exit ---
 const okAll =
