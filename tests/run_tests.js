@@ -87,7 +87,7 @@ const waLand400 = calcDuty({ state: "WA", price: 400000, isLand: true, isFhb: tr
 const waLand450 = calcDuty({ state: "WA", price: 450000, isLand: true, isFhb: true }); // (100k)*0.1539 = 15,390
 const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 15390);
 
-/* ===== SA boundary checks (temporarily disabled until row key aligned) =====
+/* ===== SA boundary checks =====
 {
   // 1) Exact lower threshold at $12,000
   const got1 = calcDuty({ state: 'SA', price: 12000 });
