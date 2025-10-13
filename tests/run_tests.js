@@ -1,7 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 const { calcDutyNSW, calcDuty } = require("../src/duty");
-const { loadStateRules, calcDutyFromBrackets } = require('../src/duty');
 
 function test(name, fn) {
   try { fn(); console.log(`✅ ${name}`); }
@@ -84,7 +83,7 @@ const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 153
 
 // ---------- SA boundary checks ----------
 {
-  const sa = loadStateRules('sa');
+  const sa = require('../rules/duty/2025-26/sa.json');
 
   // 1) Exact lower threshold at $12,000
   {
