@@ -20,35 +20,48 @@ function loadRules(state, contractDate) {
   return JSON.parse(fs.readFileSync(p, "utf8"));
 }
 
-function pickSchedule(rules, { state, isLand, isPpr, isFbh, region, price }) {
+function pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region }) {
+  const st = String(state).toUpperCase();
+
+  // 1) LAND
   if (isLand) {
+    // WA FHOR: vacant land (≤ $450k) — otherwise fall back to land/established
+    if (isFhb && st === "WA") {
+      const landCap = 450000;
+      if (price <= landCap && rules.modes.fhb_land && rules.modes.fhb_land.schedule) {
+        return rules.modes.fhb_land;
+      }
+    }
     const land = rules.modes.land;
     if (land && land.schedule) return land;
     if (land && land.inherits && rules.modes[land.inherits]) return rules.modes[land.inherits];
     return rules.modes.established;
   }
 
-  const st = String(state).toUpperCase();
-
-  // VIC PPR concession only up to $550k
+  // 2) VIC PPR (owner-occupier) only up to $550k
   if (isPpr && st === "VIC" && price <= 550000 && rules.modes.ppr) {
     return rules.modes.ppr;
   }
 
-  // QLD home concession (PPR)
+  // 3) QLD PPR (owner-occupier) — no explicit cap in our encoded schedule
   if (isPpr && st === "QLD" && rules.modes.ppr) {
     return rules.modes.ppr;
   }
 
-  // WA FHOR (first-home owner rate) uses dedicated schedules by region (metro vs non-metro)
-  if (isFbh && st === "WA") {
+  // 4) WA FHOR (homes) — region-aware caps; above cap fall back to established
+  if (isFhb && st === "WA") {
     const isMetro = String(region || "metro").toLowerCase() === "metro";
+    const cap = isMetro ? 700000 : 750000;
     const mode = isMetro ? rules.modes.fhb_home_metro : rules.modes.fhb_home_nonmetro;
-    if (mode && mode.schedule) return mode;
+    if (price <= cap && mode && mode.schedule) {
+      return mode;
+    }
   }
 
+  // 5) Default
   return rules.modes.established;
 }
+
 
 function calcBaseDuty(price, schedule) {
   const tier = schedule.schedule.find(t =>
@@ -140,7 +153,7 @@ function roundNearestDollar(x) {
 // Generic calculator (state-aware)
 function calcDuty({ state = "NSW", price, isLand = false, isPpr = false, isFhb = false, region = "metro", contractDate = "2025-10-10" }) {
   const rules = loadRules(state, contractDate);
-  const schedule = pickSchedule(rules, { state, isLand, isPpr, isFbh: isFhb, region, price });
+  const schedule = pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region });
   const base = calcBaseDuty(price, schedule);
   const withFhb = applyFHB(price, base, rules, isLand, isFhb, { state, isPpr });
   return roundNearestDollar(withFhb);
