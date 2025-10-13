@@ -1,7 +1,16 @@
 const fs = require("fs");
 const path = require("path");
-const { calcDutyNSW, calcDuty } = require("../src/duty");
-const { loadStateRules, calcDutyFromBrackets } = require('../src/duty');
+const { calcDutyNSW, calcDuty } = require('../src/duty');
+
+
+// Simple assertion helper used by SA checks
+function assertEqual(got, expected, label) {
+  if (got !== expected) {
+    console.error(`❌ ${label} expected=${expected} got=${got}`);
+    process.exit(1);
+  }
+  console.log(`✅ ${label} expected=${expected} got=${got}`);
+}
 
 // --- NSW golden tests (unchanged) ---
 const testsPath = path.join(__dirname, "golden_nsw.json");
@@ -78,61 +87,19 @@ const waLand400 = calcDuty({ state: "WA", price: 400000, isLand: true, isFhb: tr
 const waLand450 = calcDuty({ state: "WA", price: 450000, isLand: true, isFhb: true }); // (100k)*0.1539 = 15,390
 const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 15390);
 
-// ---------- SA boundary tests (enabled) ----------
-test('SA duty: exact lower threshold at $12,000', () => {
-  const sa = loadStateRules('sa');
-  const price = 12000;
-  const got = calcDutyFromBrackets(price, sa.general);
-  const expected = 120; // 1% of 12,000
-  assertEqual(got, expected, 'SA $12,000 exact');
-});
-
-test('SA duty: crossover just above $300,000 (+$100)', () => {
-  const sa = loadStateRules('sa');
-  const price = 300100; // $100 over 300k so we avoid $/100 "part thereof" ambiguity
-  const got = calcDutyFromBrackets(price, sa.general);
-  // Base at 300k = 11,330; marginal 5% on (100) = 5; total 11,335
-  const expected = 11335;
-  assertEqual(got, expected, 'SA $300,100 crossover');
-});
-
-test('SA duty: top bracket example at $1,000,000', () => {
-  const sa = loadStateRules('sa');
-  const price = 1000000;
-  const got = calcDutyFromBrackets(price, sa.general);
-  // Base at 500k = 21,330; marginal 5.5% on (1,000,000 - 500,000 = 500,000) = 27,500; total 48,830
-  const expected = 48830;
-  assertEqual(got, expected, 'SA $1,000,000');
-});
 // ---------- SA boundary checks ----------
 {
-  const sa = loadStateRules('sa');
+  // 1) Exact lower threshold at $12,000
+  const got1 = calcDuty({ state: 'SA', price: 12000 });
+  assertEqual(got1, 120, 'SA $12,000 exact');
 
-  // Exact lower threshold at $12,000
-  {
-    const price = 12000;
-    const got = calcDutyFromBrackets(price, sa.general);
-    const expected = 120; // 1% of 12,000
-    assertEqual(got, expected, 'SA $12,000 exact');
-  }
+  // 2) Crossover just above $300,000 (+$100)
+  const got2 = calcDuty({ state: 'SA', price: 300100 }); // base 11,330 + 5% of 100 = 11,335
+  assertEqual(got2, 11335, 'SA $300,100 crossover');
 
-  // Crossover just above $300,000 (+$100)
-  {
-    const price = 300100;
-    const got = calcDutyFromBrackets(price, sa.general);
-    // Base at 300k = 11,330; marginal 5% on 100 = 5 → 11,335
-    const expected = 11335;
-    assertEqual(got, expected, 'SA $300,100 crossover');
-  }
-
-  // Top bracket example at $1,000,000
-  {
-    const price = 1000000;
-    const got = calcDutyFromBrackets(price, sa.general);
-    // Base at 500k = 21,330; marginal 5.5% on 500,000 = 27,500 → 48,830
-    const expected = 48830;
-    assertEqual(got, expected, 'SA $1,000,000');
-  }
+  // 3) Top bracket example at $1,000,000
+  const got3 = calcDuty({ state: 'SA', price: 1000000 }); // base 21,330 + 5.5% of 500,000 = 48,830
+  assertEqual(got3, 48830, 'SA $1,000,000');
 }
 
 

@@ -4,23 +4,28 @@
     "financial_year": "2025-26",
     "status": "ready",
     "notes": [
-      "Official SA conveyance (transfer) duty scale for land.",
-      "Sources: RevenueSA calculator page; Johnston Withers 30 Jun 2025 article listing the current brackets."
+      "Matches engine row schema used by WA: lower_inclusive, upper_exclusive, base, marginal_rate, applies_above.",
+      "Land mode inherits established so isLand works the same way as other states."
     ]
   },
-  "general": {
-    "currency": "AUD",
-    "round": "nearest_dollar",
-    "brackets": [
-      { "up_to": 12000,   "base": 0,     "rate": 0.01   },
-      { "up_to": 30000,   "base": 120,   "rate": 0.02   },
-      { "up_to": 50000,   "base": 480,   "rate": 0.03   },
-      { "up_to": 100000,  "base": 1080,  "rate": 0.035  },
-      { "up_to": 200000,  "base": 2830,  "rate": 0.04   },
-      { "up_to": 250000,  "base": 6830,  "rate": 0.0425 },
-      { "up_to": 300000,  "base": 8955,  "rate": 0.0475 },
-      { "up_to": 500000,  "base": 11330, "rate": 0.05   },
-      { "up_to": null,    "base": 21330, "rate": 0.055  }
-    ]
+  "modes": {
+    "established": {
+      "currency": "AUD",
+      "round": "nearest_dollar",
+      "schedule": [
+        { "lower_inclusive": 0,      "upper_exclusive": 12000,  "base": 0,     "marginal_rate": 0.01,  "applies_above": 0 },
+        { "lower_inclusive": 12000,  "upper_exclusive": 30000,  "base": 120,   "marginal_rate": 0.02,  "applies_above": 12000 },
+        { "lower_inclusive": 30000,  "upper_exclusive": 50000,  "base": 480,   "marginal_rate": 0.03,  "applies_above": 30000 },
+        { "lower_inclusive": 50000,  "upper_exclusive": 100000, "base": 1080,  "marginal_rate": 0.035, "applies_above": 50000 },
+        { "lower_inclusive": 100000, "upper_exclusive": 200000, "base": 2830,  "marginal_rate": 0.04,  "applies_above": 100000 },
+        { "lower_inclusive": 200000, "upper_exclusive": 250000, "base": 6830,  "marginal_rate": 0.0425,"applies_above": 200000 },
+        { "lower_inclusive": 250000, "upper_exclusive": 300000, "base": 8955,  "marginal_rate": 0.0475,"applies_above": 250000 },
+        { "lower_inclusive": 300000, "upper_exclusive": 500000, "base": 11330, "marginal_rate": 0.05,  "applies_above": 300000 },
+        { "lower_inclusive": 500000, "upper_exclusive": null,   "base": 21330, "marginal_rate": 0.055, "applies_above": 500000 }
+      ]
+    },
+    "land": {
+      "inherits": "established"
+    }
   }
 }
