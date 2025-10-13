@@ -4,8 +4,9 @@
     "financial_year": "2025-26",
     "status": "ready",
     "notes": [
-      "Shaped to match engine: schedule is an ARRAY of rows with 'to', 'base', 'rate'.",
-      "Added land mode that inherits established so isLand paths resolve."
+      "Shaped to match engine: modes.established.schedule is an ARRAY.",
+      "Each row has both 'to' and 'max' (same value) for upper bound compatibility.",
+      "Land inherits established."
     ]
   },
   "modes": {
@@ -13,15 +14,15 @@
       "currency": "AUD",
       "round": "nearest_dollar",
       "schedule": [
-        { "to": 12000,  "base": 0,     "rate": 0.01  },
-        { "to": 30000,  "base": 120,   "rate": 0.02  },
-        { "to": 50000,  "base": 480,   "rate": 0.03  },
-        { "to": 100000, "base": 1080,  "rate": 0.035 },
-        { "to": 200000, "base": 2830,  "rate": 0.04  },
-        { "to": 250000, "base": 6830,  "rate": 0.0425 },
-        { "to": 300000, "base": 8955,  "rate": 0.0475 },
-        { "to": 500000, "base": 11330, "rate": 0.05  },
-        { "to": null,   "base": 21330, "rate": 0.055 }
+        { "to": 12000,  "max": 12000,  "base": 0,     "rate": 0.01  },
+        { "to": 30000,  "max": 30000,  "base": 120,   "rate": 0.02  },
+        { "to": 50000,  "max": 50000,  "base": 480,   "rate": 0.03  },
+        { "to": 100000, "max": 100000, "base": 1080,  "rate": 0.035 },
+        { "to": 200000, "max": 200000, "base": 2830,  "rate": 0.04  },
+        { "to": 250000, "max": 250000, "base": 6830,  "rate": 0.0425 },
+        { "to": 300000, "max": 300000, "base": 8955,  "rate": 0.0475 },
+        { "to": 500000, "max": 500000, "base": 11330, "rate": 0.05  },
+        { "to": null,   "max": null,   "base": 21330, "rate": 0.055 }
       ]
     },
     "land": {
