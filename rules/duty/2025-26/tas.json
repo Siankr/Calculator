@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "state": "TAS",
+    "financial_year": "2025-26",
+    "status": "draft",
+    "notes": ["Scaffold only. Populate schedule and set status=ready before enabling tests."]
+  },
+  "modes": {
+    "established": {
+      "currency": "AUD",
+      "round": "nearest_dollar",
+      "schedule": []
+    },
+    "land": { "inherits": "established" }
+  }
+}
