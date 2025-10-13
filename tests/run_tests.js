@@ -1,7 +1,15 @@
 const fs = require("fs");
 const path = require("path");
-const { calcDutyFromBrackets } = require('../src/duty');
+const { calcDutyFromBrackets } = require('../src/duty'); // keep as-is if already present
 
+// Simple assertion helper used by SA checks
+function assertEqual(got, expected, label) {
+  if (got !== expected) {
+    console.error(`❌ ${label} expected=${expected} got=${got}`);
+    process.exit(1);
+  }
+  console.log(`✅ ${label} expected=${expected} got=${got}`);
+}
 
 // --- NSW golden tests (unchanged) ---
 const testsPath = path.join(__dirname, "golden_nsw.json");
