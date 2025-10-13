@@ -8,7 +8,7 @@ function loadRules(state, contractDate) {
   VIC: "vic.json",
   QLD: "qld.json",
   WA:  "wa.json",
-  // SA:  "sa.json",
+  sa:  'sa.json'
   // TAS: "tas.json",
   // ACT: "act.json",
   // NT:  "nt.json"
@@ -19,7 +19,16 @@ function loadRules(state, contractDate) {
   const p = path.join(__dirname, "..", "rules", "duty", "2025-26", file);
   return JSON.parse(fs.readFileSync(p, "utf8"));
 }
-
+function loadStateRules(state) {
+   const file = STATE_FILES[state.toLowerCase()];
+   if (!file) throw new Error(`Unsupported state: ${state}`);
+   const full = path.join(RULES_ROOT, file);
+   const raw = fs.readFileSync(full, 'utf8');
+   const json = JSON.parse(raw);
++  if (json?.meta?.status && json.meta.status !== 'ready') {
++    throw new Error(`Rules for ${json.meta.state} (${json.meta.financial_year}) are in status "${json.meta.status}". Fill slabs and set status="ready".`);
++  }
+  
 function pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region }) {
   const st = String(state).toUpperCase();
 
