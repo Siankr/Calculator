@@ -1,0 +1,34 @@
+{
+  "jurisdiction": "WA",
+  "rules_version": "2025.07.01-WA-v0",
+  "effective_from": "2025-07-01",
+  "effective_to": "2026-06-30",
+  "rounding": "nearest_dollar",
+  "modes": {
+    "established": { "schedule": [] },
+    "land": { "inherits": "established" }
+  },
+  "fhb": {
+    "enabled": true,
+    "rules": [
+      {
+        "property_type": "established",
+        "full_exemption_upto": 0,
+        "concession_to": 0,
+        "concession_formula": "none",
+        "notes": "Populate with WA FHB thresholds/concessions"
+      },
+      {
+        "property_type": "land",
+        "full_exemption_upto": 0,
+        "concession_to": 0,
+        "concession_formula": "none",
+        "notes": "Populate with WA FHB thresholds/concessions"
+      }
+    ]
+  },
+  "surcharges": {
+    "foreign_buyer": { "enabled": false, "rate": 0.00, "base": "dutiable_value", "caps_or_thresholds": [] }
+  },
+  "notes": "Placeholder WA rules; real slabs to be populated next."
+}
