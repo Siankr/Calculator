@@ -4,15 +4,15 @@ const path = require("path");
 // --- Load rules by state (2025-26). Extend the map as you add more states.
 function loadRules(state, contractDate) {
   const fileMap = {
-    NSW: "nsw.json",
-    VIC: "vic.json",
-    QLD: "qld.json",
-    // WA:  "wa.json",
-    // SA:  "sa.json",
-    // TAS: "tas.json",
-    // ACT: "act.json",
-    // NT:  "nt.json"
-  };
+  NSW: "nsw.json",
+  VIC: "vic.json",
+  QLD: "qld.json",
+  WA:  "wa.json",
+  // SA:  "sa.json",
+  // TAS: "tas.json",
+  // ACT: "act.json",
+  // NT:  "nt.json"
+};
   const key = String(state || "").toUpperCase();
   const file = fileMap[key];
   if (!file) throw new Error(`Unsupported state: ${state}`);
