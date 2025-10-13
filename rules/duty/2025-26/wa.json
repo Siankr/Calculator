@@ -1,34 +1,32 @@
 {
   "jurisdiction": "WA",
-  "rules_version": "2025.07.01-WA-v0",
+  "rules_version": "2025.07.01-WA-v1",
   "effective_from": "2025-07-01",
   "effective_to": "2026-06-30",
   "rounding": "nearest_dollar",
+
   "modes": {
-    "established": { "schedule": [] },
+    "established": {
+      "schedule": [
+        { "lower_inclusive": 0, "upper_exclusive": 120000, "base": 0, "marginal_rate": 0.0190, "applies_above": 0 },
+        { "lower_inclusive": 120000, "upper_exclusive": 150000, "base": 2280, "marginal_rate": 0.0285, "applies_above": 120000 },
+        { "lower_inclusive": 150000, "upper_exclusive": 360000, "base": 3135, "marginal_rate": 0.0380, "applies_above": 150000 },
+        { "lower_inclusive": 360000, "upper_exclusive": 725000, "base": 11115, "marginal_rate": 0.0475, "applies_above": 360000 },
+        { "lower_inclusive": 725000, "upper_exclusive": null, "base": 28453, "marginal_rate": 0.0515, "applies_above": 725000 }
+      ],
+      "notes": "WA general transfer duty schedule (Duties Act 2008 Sch 2)."
+    },
     "land": { "inherits": "established" }
   },
+
   "fhb": {
-    "enabled": true,
-    "rules": [
-      {
-        "property_type": "established",
-        "full_exemption_upto": 0,
-        "concession_to": 0,
-        "concession_formula": "none",
-        "notes": "Populate with WA FHB thresholds/concessions"
-      },
-      {
-        "property_type": "land",
-        "full_exemption_upto": 0,
-        "concession_to": 0,
-        "concession_formula": "none",
-        "notes": "Populate with WA FHB thresholds/concessions"
-      }
-    ]
+    "enabled": false,
+    "rules": []
   },
+
   "surcharges": {
-    "foreign_buyer": { "enabled": false, "rate": 0.00, "base": "dutiable_value", "caps_or_thresholds": [] }
+    "foreign_buyer": { "enabled": true, "rate": 0.07, "base": "dutiable_value", "caps_or_thresholds": [], "notes": "Foreign transfer duty 7% under s205O." }
   },
-  "notes": "Placeholder WA rules; real slabs to be populated next."
+
+  "notes": "General slabs per Duties Act 2008, Schedule 2; first home owner rate changed from 21 Mar 2025 and will be wired later with regional thresholds."
 }
