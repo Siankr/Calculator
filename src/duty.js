@@ -71,40 +71,46 @@ function pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region }) {
 }
 
 
-// schedule = the selected mode object, e.g. rules.modes.established
+// schedule may be:
+//  - an ARRAY of rows
+//  - an OBJECT with schedule: ARRAY
+//  - an OBJECT with schedule: { brackets: ARRAY }
+//  - an OBJECT with brackets: ARRAY
 function calcBaseDuty(schedule, price) {
-  // 1) Get the raw rows from whatever shape the mode uses
-  const raw = schedule && schedule.schedule;
-  const rows0 = Array.isArray(raw)
-    ? raw
-    : (raw && Array.isArray(raw.brackets) ? raw.brackets : []);
+  let rows0 = [];
 
-  if (!Array.isArray(rows0) || rows0.length === 0) {
+  if (Array.isArray(schedule)) {
+    rows0 = schedule;
+  } else if (schedule && Array.isArray(schedule.schedule)) {
+    rows0 = schedule.schedule;
+  } else if (schedule && schedule.schedule && Array.isArray(schedule.schedule.brackets)) {
+    rows0 = schedule.schedule.brackets;
+  } else if (schedule && Array.isArray(schedule.brackets)) {
+    rows0 = schedule.brackets;
+  }
+
+  if (!rows0.length) {
     throw new Error('Empty or invalid schedule');
   }
 
-  // 2) Normalise keys so we can handle 'to' | 'up_to' | 'max' etc.
-  const rows = rows0.map((r) => ({
-    to: (r.to ?? r.up_to ?? r.max ?? r.ceiling ?? null),
+  // Normalise keys: prefer 'to', fall back to 'up_to'/'max'/'ceiling'
+  const rows = rows0.map(r => ({
+    to: r.to ?? r.up_to ?? r.max ?? r.ceiling ?? null,
     base: Number(r.base ?? 0),
     rate: Number(r.rate ?? 0)
   }));
 
-  // 3) Find the matching tier (treat null as open-ended)
-  let idx = rows.findIndex((r) => r.to == null || price <= r.to);
-  if (idx === -1) {
-    // Fallback to last tier if nothing matched
-    idx = rows.length - 1;
-  }
+  // Find tier (null 'to' = open-ended)
+  let idx = rows.findIndex(r => r.to == null || price <= r.to);
+  if (idx === -1) idx = rows.length - 1;
 
-  // 4) Compute lower bound = previous tier's 'to' (or 0)
-  const prevTo = Number(rows[idx - 1]?.to ?? 0);
+  // Lower bound = previous tier's 'to' (or 0)
+  const lower = Number(rows[idx - 1]?.to ?? 0);
 
-  // 5) Base + marginal on the amount above lower bound
+  // Base + marginal on amount above lower bound
   const tier = rows[idx];
-  const duty = tier.base + tier.rate * (price - prevTo);
+  const duty = tier.base + tier.rate * (price - lower);
 
-  // 6) Round per your existing guardrail
   return Math.round(duty);
 }
 
