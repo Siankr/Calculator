@@ -1,0 +1,63 @@
+{
+  "meta": {
+    "state": "SA",
+    "financial_year": "2025-26",
+    "status": "draft",                // switch to "ready" once slabs below are filled
+    "notes": [
+      "Structure aligns with other states: progressive brackets with base + marginal rate.",
+      "No FHB/FHOR logic included here (add as a separate schedule/flag if needed)."
+    ]
+  },
+  "general": {
+    "currency": "AUD",
+    "round": "nearest_dollar",
+    "brackets": [
+      // Paste real 2025-26 SA brackets here; examples below are placeholders and MUST be replaced.
+      // {
+      //   "up_to": 12500,
+      //   "base": 0,
+      //   "rate": 0.0
+      // },
+      // {
+      //   "up_to": 30000,
+      //   "base": 0,
+      //   "rate": 0.01
+      // },
+      // {
+      //   "up_to": 50000,
+      //   "base": 175,
+      //   "rate": 0.02
+      // },
+      // {
+      //   "up_to": 100000,
+      //   "base": 575,
+      //   "rate": 0.035
+      // },
+      // {
+      //   "up_to": 200000,
+      //   "base": 2325,
+      //   "rate": 0.040
+      // },
+      // {
+      //   "up_to": 250000,
+      //   "base": 6325,
+      //   "rate": 0.0425
+      // },
+      // {
+      //   "up_to": 300000,
+      //   "base": 8450,
+      //   "rate": 0.045
+      // },
+      // {
+      //   "up_to": 500000,
+      //   "base": 10700,
+      //   "rate": 0.0475
+      // },
+      // {
+      //   "up_to": null,               // null = no upper bound
+      //   "base": 20200,
+      //   "rate": 0.05
+      // }
+    ]
+  }
+}
