@@ -1,11 +1,8 @@
 const fs = require("fs");
 const path = require("path");
-const { calcDutyNSW, calcDuty } = require("../src/duty");
+const { calcDutyFromBrackets } = require('../src/duty');
 
-function test(name, fn) {
-  try { fn(); console.log(`✅ ${name}`); }
-  catch (e) { console.error(`❌ ${name}: ${e.message}`); process.exit(1); }
-}
+
 // --- NSW golden tests (unchanged) ---
 const testsPath = path.join(__dirname, "golden_nsw.json");
 if (!fs.existsSync(testsPath)) {
@@ -86,30 +83,16 @@ const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 153
   const sa = require('../rules/duty/2025-26/sa.json');
 
   // 1) Exact lower threshold at $12,000
-  {
-    const price = 12000;
-    const got = calcDutyFromBrackets(price, sa.general);
-    const expected = 120; // 1% of 12,000
-    assertEqual(got, expected, 'SA $12,000 exact');
-  }
+  const got1 = calcDutyFromBrackets(12000, sa.general);
+  assertEqual(got1, 120, 'SA $12,000 exact');
 
   // 2) Crossover just above $300,000 (+$100)
-  {
-    const price = 300100; // $100 over 300k
-    const got = calcDutyFromBrackets(price, sa.general);
-    // Base at 300k = 11,330; marginal 5% on 100 = 5 → 11,335
-    const expected = 11335;
-    assertEqual(got, expected, 'SA $300,100 crossover');
-  }
+  const got2 = calcDutyFromBrackets(300100, sa.general); // base 11,330 + 5% of 100 = 11,335
+  assertEqual(got2, 11335, 'SA $300,100 crossover');
 
   // 3) Top bracket example at $1,000,000
-  {
-    const price = 1000000;
-    const got = calcDutyFromBrackets(price, sa.general);
-    // Base at 500k = 21,330; marginal 5.5% on 500,000 = 27,500 → 48,830
-    const expected = 48830;
-    assertEqual(got, expected, 'SA $1,000,000');
-  }
+  const got3 = calcDutyFromBrackets(1000000, sa.general); // base 21,330 + 5.5% of 500,000 = 48,830
+  assertEqual(got3, 48830, 'SA $1,000,000');
 }
 
 
