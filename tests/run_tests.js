@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-const { calcDutyNSW, calcDuty, calcDutyFromBrackets } = require('../src/duty');
+const { calcDutyNSW, calcDuty } = require('../src/duty');
+
 
 // Simple assertion helper used by SA checks
 function assertEqual(got, expected, label) {
@@ -88,18 +89,18 @@ const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 153
 
 // ---------- SA boundary checks ----------
 {
-  const sa = require('../rules/duty/2025-26/sa.json');
-
   // 1) Exact lower threshold at $12,000
-  const got1 = calcDutyFromBrackets(12000, sa.general);
+  const got1 = calcDuty({ state: 'SA', price: 12000 });
   assertEqual(got1, 120, 'SA $12,000 exact');
 
   // 2) Crossover just above $300,000 (+$100)
-  const got2 = calcDutyFromBrackets(300100, sa.general); // base 11,330 + 5% of 100 = 11,335
+  // Base at 300k = 11,330; marginal 5% on 100 = 5 → 11,335
+  const got2 = calcDuty({ state: 'SA', price: 300100 });
   assertEqual(got2, 11335, 'SA $300,100 crossover');
 
   // 3) Top bracket example at $1,000,000
-  const got3 = calcDutyFromBrackets(1000000, sa.general); // base 21,330 + 5.5% of 500,000 = 48,830
+  // Base at 500k = 21,330; marginal 5.5% on 500,000 = 27,500 → 48,830
+  const got3 = calcDuty({ state: 'SA', price: 1000000 });
   assertEqual(got3, 48830, 'SA $1,000,000');
 }
 
