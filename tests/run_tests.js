@@ -33,25 +33,49 @@ const dStd560 = calcDuty({ state: "VIC", price: 560000, isPpr: false });
 const vicPprDisabledAbove550 = dPpr560 === dStd560;
 
 // --- QLD checks ---
-// General (non-home) boundary at $540k: should equal 17,325
 const qldGen540 = calcDuty({ state: "QLD", price: 540000, isPpr: false });
 const qldGen540OK = qldGen540 === 17325;
 
-// PPR (home concession) at $350k: 1% = $3,500
 const qldPpr350 = calcDuty({ state: "QLD", price: 350000, isPpr: true });
 const qldPpr350OK = qldPpr350 === 3500;
 
-// FHB (established, owner-occ): full exemption ≤ $700k; step rebate to $800k
 const qldFhb700 = calcDuty({ state: "QLD", price: 700000, isPpr: true, isFhb: true }); // expect 0
 const qldFhb710 = calcDuty({ state: "QLD", price: 710000, isPpr: true, isFhb: true }); // expect 2,185
 const qldFhb750 = calcDuty({ state: "QLD", price: 750000, isPpr: true, isFhb: true }); // expect 10,925
-const qldFhb800 = calcDuty({ state: "QLD", price: 800000, isPpr: true, isFhb: true }); // expect PPR duty 21,850
-
+const qldFhb800 = calcDuty({ state: "QLD", price: 800000, isPpr: true, isFhb: true }); // expect 21,850
 const qldFhbOK =
   qldFhb700 === 0 &&
   qldFhb710 === 2185 &&
   qldFhb750 === 10925 &&
   qldFhb800 === 21850;
+
+// --- WA checks ---
+// General: boundary sanity (725k base is 28,453 in the rules; we’ll test a simpler interior point)
+const waGen360 = calcDuty({ state: "WA", price: 360000 }); // base for next tier = 11,115
+const waGen360OK = waGen360 === 11115;
+
+// FHOR (homes) — Metro/Peel (cap 700k): 0 ≤500k; 13.63% over 500k to 700k
+const waMetro500 = calcDuty({ state: "WA", price: 500000, isFhb: true, region: "metro" }); // 0
+const waMetro600 = calcDuty({ state: "WA", price: 600000, isFhb: true, region: "metro" }); // (100k)*0.1363 = 13,630
+const waMetro700 = calcDuty({ state: "WA", price: 700000, isFhb: true, region: "metro" }); // (200k)*0.1363 = 27,260
+// Above cap should fall back to established (PPR=established for WA)
+const waMetro720Fhb = calcDuty({ state: "WA", price: 720000, isFhb: true, region: "metro" });
+const waMetro720Std = calcDuty({ state: "WA", price: 720000, isFhb: false });
+const waMetroOK = (waMetro500 === 0) && (waMetro600 === 13630) && (waMetro700 === 27260) && (waMetro720Fhb === waMetro720Std);
+
+// FHOR (homes) — Outside Metro (cap 750k): 0 ≤500k; 11.89% over 500k to 750k
+const waNonMetro500 = calcDuty({ state: "WA", price: 500000, isFhb: true, region: "non_metro" }); // 0
+const waNonMetro600 = calcDuty({ state: "WA", price: 600000, isFhb: true, region: "non_metro" }); // (100k)*0.1189 = 11,890
+const waNonMetro750 = calcDuty({ state: "WA", price: 750000, isFhb: true, region: "non_metro" }); // (250k)*0.1189 = 29,725
+const waNonMetro760Fhb = calcDuty({ state: "WA", price: 760000, isFhb: true, region: "non_metro" });
+const waNonMetro760Std = calcDuty({ state: "WA", price: 760000, isFhb: false });
+const waNonMetroOK = (waNonMetro500 === 0) && (waNonMetro600 === 11890) && (waNonMetro750 === 29725) && (waNonMetro760Fhb === waNonMetro760Std);
+
+// FHOR (vacant land) — state-wide cap 450k: 0 ≤350k; 15.39% over 350k to 450k
+const waLand350 = calcDuty({ state: "WA", price: 350000, isLand: true, isFhb: true }); // 0
+const waLand400 = calcDuty({ state: "WA", price: 400000, isLand: true, isFhb: true }); // (50k)*0.1539 = 7,695
+const waLand450 = calcDuty({ state: "WA", price: 450000, isLand: true, isFhb: true }); // (100k)*0.1539 = 15,390
+const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 15390);
 
 // --- Summary & exit ---
 const okAll =
@@ -60,7 +84,11 @@ const okAll =
   vicPprDisabledAbove550 &&
   qldGen540OK &&
   qldPpr350OK &&
-  qldFhbOK;
+  qldFhbOK &&
+  waGen360OK &&
+  waMetroOK &&
+  waNonMetroOK &&
+  waLandOK;
 
 console.log(`\n${passed}/${tests.length} NSW tests passed`);
 console.log(`VIC PPR @ $500k lower than non-PPR: ${vicPprLowerAt500 ? "OK" : "FAIL"} (PPR=${dPpr500}, Std=${dStd500})`);
@@ -68,5 +96,9 @@ console.log(`VIC PPR disabled above $550k: ${vicPprDisabledAbove550 ? "OK" : "FA
 console.log(`QLD general @ $540k = 17325: ${qldGen540OK ? "OK" : "FAIL"} (got ${qldGen540})`);
 console.log(`QLD PPR @ $350k = 3500: ${qldPpr350OK ? "OK" : "FAIL"} (got ${qldPpr350})`);
 console.log(`QLD FHB 700k→0, 710k→2185, 750k→10925, 800k→21850: ${qldFhbOK ? "OK" : "FAIL"} (got ${qldFhb700}, ${qldFhb710}, ${qldFhb750}, ${qldFhb800})`);
+console.log(`WA general @ $360k = 11115: ${waGen360OK ? "OK" : "FAIL"} (got ${waGen360})`);
+console.log(`WA FHOR Metro: 500k→0, 600k→13630, 700k→27260, 720k fallback equal: ${waMetroOK ? "OK" : "FAIL"} (got ${waMetro500}, ${waMetro600}, ${waMetro700}, fhb@720=${waMetro720Fhb}, std@720=${waMetro720Std})`);
+console.log(`WA FHOR Non-Metro: 500k→0, 600k→11890, 750k→29725, 760k fallback equal: ${waNonMetroOK ? "OK" : "FAIL"} (got ${waNonMetro500}, ${waNonMetro600}, ${waNonMetro750}, fhb@760=${waNonMetro760Fhb}, std@760=${waNonMetro760Std})`);
+console.log(`WA FHOR Land: 350k→0, 400k→7695, 450k→15390: ${waLandOK ? "OK" : "FAIL"} (got ${waLand350}, ${waLand400}, ${waLand450})`);
 
 process.exit(okAll ? 0 : 1);
