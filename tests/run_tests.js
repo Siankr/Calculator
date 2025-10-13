@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { calcDutyNSW, calcDuty } = require("../src/duty");
+const { loadStateRules, calcDutyFromBrackets } = require('../src/duty');
 
 // --- NSW golden tests (unchanged) ---
 const testsPath = path.join(__dirname, "golden_nsw.json");
@@ -103,6 +104,37 @@ test('SA duty: top bracket example at $1,000,000', () => {
   const expected = 48830;
   assertEqual(got, expected, 'SA $1,000,000');
 });
+// ---------- SA boundary checks ----------
+{
+  const sa = loadStateRules('sa');
+
+  // Exact lower threshold at $12,000
+  {
+    const price = 12000;
+    const got = calcDutyFromBrackets(price, sa.general);
+    const expected = 120; // 1% of 12,000
+    assertEqual(got, expected, 'SA $12,000 exact');
+  }
+
+  // Crossover just above $300,000 (+$100)
+  {
+    const price = 300100;
+    const got = calcDutyFromBrackets(price, sa.general);
+    // Base at 300k = 11,330; marginal 5% on 100 = 5 → 11,335
+    const expected = 11335;
+    assertEqual(got, expected, 'SA $300,100 crossover');
+  }
+
+  // Top bracket example at $1,000,000
+  {
+    const price = 1000000;
+    const got = calcDutyFromBrackets(price, sa.general);
+    // Base at 500k = 21,330; marginal 5.5% on 500,000 = 27,500 → 48,830
+    const expected = 48830;
+    assertEqual(got, expected, 'SA $1,000,000');
+  }
+}
+
 
 // --- Summary & exit ---
 const okAll =
