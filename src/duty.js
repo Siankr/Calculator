@@ -20,7 +20,7 @@ function loadRules(state, contractDate) {
   return JSON.parse(fs.readFileSync(p, "utf8"));
 }
 
-function pickSchedule(rules, { state, isLand, isPpr, price }) {
+function pickSchedule(rules, { state, isLand, isPpr, isFbh, region, price }) {
   if (isLand) {
     const land = rules.modes.land;
     if (land && land.schedule) return land;
@@ -35,14 +35,20 @@ function pickSchedule(rules, { state, isLand, isPpr, price }) {
     return rules.modes.ppr;
   }
 
-  // QLD home concession (PPR) has no $ cap in our encoded schedule
+  // QLD home concession (PPR)
   if (isPpr && st === "QLD" && rules.modes.ppr) {
     return rules.modes.ppr;
   }
 
+  // WA FHOR (first-home owner rate) uses dedicated schedules by region (metro vs non-metro)
+  if (isFbh && st === "WA") {
+    const isMetro = String(region || "metro").toLowerCase() === "metro";
+    const mode = isMetro ? rules.modes.fhb_home_metro : rules.modes.fhb_home_nonmetro;
+    if (mode && mode.schedule) return mode;
+  }
+
   return rules.modes.established;
 }
-
 
 function calcBaseDuty(price, schedule) {
   const tier = schedule.schedule.find(t =>
@@ -132,9 +138,9 @@ function roundNearestDollar(x) {
 }
 
 // Generic calculator (state-aware)
-function calcDuty({ state = "NSW", price, isLand = false, isPpr = false, isFhb = false, contractDate = "2025-10-10" }) {
+function calcDuty({ state = "NSW", price, isLand = false, isPpr = false, isFhb = false, region = "metro", contractDate = "2025-10-10" }) {
   const rules = loadRules(state, contractDate);
-  const schedule = pickSchedule(rules, { state, isLand, isPpr, price });
+  const schedule = pickSchedule(rules, { state, isLand, isPpr, isFbh: isFhb, region, price });
   const base = calcBaseDuty(price, schedule);
   const withFhb = applyFHB(price, base, rules, isLand, isFhb, { state, isPpr });
   return roundNearestDollar(withFhb);

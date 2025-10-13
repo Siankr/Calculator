@@ -14,6 +14,9 @@
         { "lower_inclusive": 360000, "upper_exclusive": 725000, "base": 11115, "marginal_rate": 0.0475, "applies_above": 360000 },
         { "lower_inclusive": 725000, "upper_exclusive": null, "base": 28453, "marginal_rate": 0.0515, "applies_above": 725000 }
       ],
+      "fhb_home_metro": { "schedule": [], "notes": "WA FHOR—Metro/Peel schedule (to be populated)" },
+      "fhb_home_nonmetro": { "schedule": [], "notes": "WA FHOR—Outside Metro schedule (to be populated)" }
+
       "notes": "WA general transfer duty schedule (Duties Act 2008 Sch 2)."
     },
     "land": { "inherits": "established" }
