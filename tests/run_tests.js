@@ -3,6 +3,10 @@ const path = require("path");
 const { calcDutyNSW, calcDuty } = require("../src/duty");
 const { loadStateRules, calcDutyFromBrackets } = require('../src/duty');
 
+function test(name, fn) {
+  try { fn(); console.log(`✅ ${name}`); }
+  catch (e) { console.error(`❌ ${name}: ${e.message}`); process.exit(1); }
+
 // --- NSW golden tests (unchanged) ---
 const testsPath = path.join(__dirname, "golden_nsw.json");
 if (!fs.existsSync(testsPath)) {
