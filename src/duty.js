@@ -18,6 +18,10 @@ function loadRules(state, contractDate) {
   if (!file) throw new Error(`Unsupported state: ${state}`);
   const p = path.join(__dirname, "..", "rules", "duty", "2025-26", file);
   return JSON.parse(fs.readFileSync(p, "utf8"));
+  if (json?.meta?.status && json.meta.status !== 'ready') {
+  const st = json?.meta?.state || state;
+  const fy = json?.meta?.financial_year || 'unknown FY';
+  throw new Error(`Rules for ${st} (${fy}) not ready: ${json.meta.status}`);
 }
 function loadStateRules(state) {
   const file = STATE_FILES[state.toLowerCase()];
