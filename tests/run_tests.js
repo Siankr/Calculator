@@ -134,6 +134,16 @@ const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 153
   const nt3 = calcDuty({ state: 'NT', price: 6000000 });
   assertEqual(nt3, 357000, 'NT $6,000,000 (flat 5.95%)');
 }
+// ---------- NT polynomial checks (< $525k) ----------
+{
+  // 1) $500,000 via polynomial: V=500 → 0.06571441*500^2 + 15*500 = 23,928.60 → $23,929
+  const ntPoly1 = calcDuty({ state: 'NT', price: 500000 });
+  assertEqual(ntPoly1, 23929, 'NT poly @ $500,000');
+
+  // 2) Continuity at $525,000: poly ≈ 25,987.53 → $25,988 (also 4.95% of 525,000 = 25,987.5 → $25,988)
+  const ntPoly2 = calcDuty({ state: 'NT', price: 525000 });
+  assertEqual(ntPoly2, 25988, 'NT poly @ $525,000 (boundary)');
+}
 
 // --- Summary & exit ---
 const okAll =
