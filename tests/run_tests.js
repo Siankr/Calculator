@@ -12,6 +12,29 @@ function assertEqual(got, expected, label) {
   console.log(`✅ ${label} expected=${expected} got=${got}`);
 }
 
+// ---- Rules schema sanity (WA-style rows) ----
+function _schemaCheckState(code) {
+  const rules = require(`../rules/duty/2025-26/${code}.json`);
+  const sched = rules?.modes?.established?.schedule;
+  if (!Array.isArray(sched) || !sched.length) {
+    console.error(`❌ ${code.toUpperCase()} schedule missing/empty`);
+    return false;
+  }
+  const row = sched[0];
+  const required = ['lower_inclusive', 'upper_exclusive', 'base', 'marginal_rate', 'applies_above'];
+  const missing = required.filter(k => !(k in row));
+  if (missing.length) {
+    console.error(`❌ ${code.toUpperCase()} schema missing keys: ${missing.join(', ')}`);
+    return false;
+  }
+  console.log(`✅ ${code.toUpperCase()} schedule schema OK`);
+  return true;
+}
+
+// run for our newly added states (extend this list as you add more)
+const _schemaAllOK = ['sa', 'tas', 'act', 'nt'].every(_schemaCheckState);
+
+
 // --- NSW golden tests (unchanged) ---
 const testsPath = path.join(__dirname, "golden_nsw.json");
 if (!fs.existsSync(testsPath)) {
