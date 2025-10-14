@@ -4,12 +4,26 @@
     "financial_year": "2025-26",
     "status": "draft",
     "notes": ["Scaffold only. Populate schedule and set status=ready before enabling tests."]
+    "status": "ready",
+    "notes": [
+      "Matches WA/SA row schema: lower_inclusive, upper_exclusive, base, marginal_rate, applies_above.",
+      "Rates sourced from SRO Tasmania (duty payable on/after 21 Oct 2013)."
+    ]
   },
   "modes": {
     "established": {
       "currency": "AUD",
       "round": "nearest_dollar",
       "schedule": []
+      "schedule": [
+        { "lower_inclusive": 0,      "upper_exclusive": 3000,   "base": 50,    "marginal_rate": 0.0,    "applies_above": 0 },
+        { "lower_inclusive": 3000,   "upper_exclusive": 25000,  "base": 50,    "marginal_rate": 0.0175, "applies_above": 3000 },
+        { "lower_inclusive": 25000,  "upper_exclusive": 75000,  "base": 435,   "marginal_rate": 0.0225, "applies_above": 25000 },
+        { "lower_inclusive": 75000,  "upper_exclusive": 200000, "base": 1560,  "marginal_rate": 0.035,  "applies_above": 75000 },
+        { "lower_inclusive": 200000, "upper_exclusive": 375000, "base": 5935,  "marginal_rate": 0.04,   "applies_above": 200000 },
+        { "lower_inclusive": 375000, "upper_exclusive": 725000, "base": 12935, "marginal_rate": 0.0425, "applies_above": 375000 },
+        { "lower_inclusive": 725000, "upper_exclusive": null,   "base": 27810, "marginal_rate": 0.045,  "applies_above": 725000 }
+      ]
     },
     "land": { "inherits": "established" }
   }
