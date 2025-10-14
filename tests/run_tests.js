@@ -145,6 +145,31 @@ const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 153
   assertEqual(ntPoly2, 25988, 'NT poly @ $525,000 (boundary)');
 }
 
+// ---------- ACT boundary checks (general / non-PPR) ----------
+{
+  const act1 = calcDuty({ state: 'ACT', price: 200000 });
+  assertEqual(act1, 2400, 'ACT $200,000 exact');
+
+  const act2 = calcDuty({ state: 'ACT', price: 300100 });
+  assertEqual(act2, 4603, 'ACT $300,100 crossover');
+
+  const act3 = calcDuty({ state: 'ACT', price: 2000000 });
+  assertEqual(act3, 90800, 'ACT $2,000,000 flat tier');
+}
+
+// ---------- ACT PPR boundary checks ----------
+{
+  const actP1 = calcDuty({ state: 'ACT', price: 260000, isPpr: true });
+  assertEqual(actP1, 728, 'ACT PPR $260,000 exact');
+
+  const actP2 = calcDuty({ state: 'ACT', price: 300100, isPpr: true });
+  assertEqual(actP2, 1611, 'ACT PPR $300,100 crossover');
+
+  const actP3 = calcDuty({ state: 'ACT', price: 2000000, isPpr: true });
+  assertEqual(actP3, 90800, 'ACT PPR $2,000,000 flat tier');
+}
+
+
 // --- Summary & exit ---
 const okAll =
   passed === tests.length &&
