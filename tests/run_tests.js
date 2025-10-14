@@ -119,6 +119,21 @@ const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 153
   assertEqual(got3, 40185, 'TAS $1,000,000');
 }
 
+// ---------- NT boundary checks (general) ----------
+{
+  // 1) Just above the $525k break (+$100) → flat 4.95% of total
+  // 4.95% * 525,100 = 25,992.45 → rounds to $25,992
+  const nt1 = calcDuty({ state: 'NT', price: 525100 });
+  assertEqual(nt1, 25992, 'NT $525,100 (flat 4.95%)');
+
+  // 2) Exact at $3,000,000 → 5.75% of total = $172,500
+  const nt2 = calcDuty({ state: 'NT', price: 3000000 });
+  assertEqual(nt2, 172500, 'NT $3,000,000 (flat 5.75%)');
+
+  // 3) Top tier example $6,000,000 → 5.95% of total = $357,000
+  const nt3 = calcDuty({ state: 'NT', price: 6000000 });
+  assertEqual(nt3, 357000, 'NT $6,000,000 (flat 5.95%)');
+}
 
 // --- Summary & exit ---
 const okAll =
