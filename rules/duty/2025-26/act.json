@@ -2,17 +2,26 @@
   "meta": {
     "state": "ACT",
     "financial_year": "2025-26",
-    "status": "draft",
+    "status": "ready",
     "notes": [
-      "Scaffold only. Populate schedule and set status=ready before enabling tests.",
-      "Schema matches WA/SA/TAS: modes.established.schedule (array), land inherits established."
+      "Non-commercial (general/investor) schedule encoded as base + marginal rates.",
+      "Owner-occupier has lower rates up to $1,455,000; we'll wire that later via a `ppr` mode.",
+      "Top tier is a flat 4.54% on the total amount above $1,455,000 (as per ACT practice)."
     ]
   },
   "modes": {
     "established": {
       "currency": "AUD",
       "round": "nearest_dollar",
-      "schedule": []
+      "schedule": [
+        { "lower_inclusive": 0,        "upper_exclusive": 200000,  "base": 0,      "marginal_rate": 0.0120, "applies_above": 0 },
+        { "lower_inclusive": 200000,   "upper_exclusive": 300000,  "base": 2400,   "marginal_rate": 0.0220, "applies_above": 200000 },
+        { "lower_inclusive": 300000,   "upper_exclusive": 500000,  "base": 4600,   "marginal_rate": 0.0340, "applies_above": 300000 },
+        { "lower_inclusive": 500000,   "upper_exclusive": 750000,  "base": 11400,  "marginal_rate": 0.0432, "applies_above": 500000 },
+        { "lower_inclusive": 750000,   "upper_exclusive": 1000000, "base": 22200,  "marginal_rate": 0.0590, "applies_above": 750000 },
+        { "lower_inclusive": 1000000,  "upper_exclusive": 1455000, "base": 36950,  "marginal_rate": 0.0640, "applies_above": 1000000 },
+        { "lower_inclusive": 1455000,  "upper_exclusive": null,    "base": 0,      "marginal_rate": 0.0454, "applies_above": 0 }
+      ]
     },
     "land": { "inherits": "established" }
   }
