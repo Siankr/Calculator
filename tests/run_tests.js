@@ -195,6 +195,7 @@ const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 153
 
 // --- Summary & exit ---
 const okAll =
+  _schemaAllOK &&
   passed === tests.length &&
   vicPprLowerAt500 &&
   vicPprDisabledAbove550 &&
@@ -205,6 +206,7 @@ const okAll =
   waMetroOK &&
   waNonMetroOK &&
   waLandOK;
+
 
 console.log(`\n${passed}/${tests.length} NSW tests passed`);
 console.log(`VIC PPR @ $500k lower than non-PPR: ${vicPprLowerAt500 ? "OK" : "FAIL"} (PPR=${dPpr500}, Std=${dStd500})`);
