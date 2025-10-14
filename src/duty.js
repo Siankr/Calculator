@@ -162,6 +162,20 @@ function roundNearestDollar(x) {
 function calcDuty({ state = "NSW", price, isLand = false, isPpr = false, isFhb = false, region = "metro", contractDate = "2025-10-10" }) {
   const rules = loadRules(state, contractDate);
   const schedule = pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region });
+  // helper (place near top-level helpers, or inline before use)
+function calcDutyNtPoly(price) {
+  const V = price / 1000; // value in thousands
+  return Math.round(0.06571441 * V * V + 15 * V);
+}
+
+// ... inside calcDuty(...) AFTER you have `price` and `mode`:
+if (mode && mode.formula && mode.formula.type === 'nt_poly') {
+  const cap = Number(mode.formula.max_applicable || Infinity);
+  if (price <= cap) {
+    return calcDutyNtPoly(price);
+  }
+}
+
   const base = calcBaseDuty(price, schedule);
   const withFhb = applyFHB(price, base, rules, isLand, isFhb, { state, isPpr });
   return roundNearestDollar(withFhb);
