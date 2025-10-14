@@ -10,8 +10,8 @@ function loadRules(state, contractDate) {
   WA:  "wa.json",
   SA:  "sa.json",
   TAS: "tas.json",
-  // ACT: "act.json",
-  // NT:  "nt.json"
+  ACT: "act.json",
+  NT:  "nt.json"
 };
   const key = String(state || "").toUpperCase();
   const file = fileMap[key];
