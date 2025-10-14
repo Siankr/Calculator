@@ -18,11 +18,7 @@ function loadRules(state, contractDate) {
   if (!file) throw new Error(`Unsupported state: ${state}`);
   const p = path.join(__dirname, "..", "rules", "duty", "2025-26", file);
   return JSON.parse(fs.readFileSync(p, "utf8"));
-  if (json?.meta?.status && json.meta.status !== 'ready') {
-  const st = json?.meta?.state || state;
-  const fy = json?.meta?.financial_year || 'unknown FY';
-  throw new Error(`Rules for ${st} (${fy}) not ready: ${json.meta.status}`);
-}
+ 
 function loadStateRules(state) {
   const file = STATE_FILES[state.toLowerCase()];
   if (!file) throw new Error(`Unsupported state: ${state}`);
@@ -172,6 +168,12 @@ function roundNearestDollar(x) {
 // Generic calculator (state-aware)
 function calcDuty({ state = "NSW", price, isLand = false, isPpr = false, isFhb = false, region = "metro", contractDate = "2025-10-10" }) {
   const rules = loadRules(state, contractDate);
+  const status = rules?.meta?.status || 'ready';
+if (status !== 'ready') {
+  const st = (rules?.meta?.state || state || '').toString().toUpperCase();
+  const fy = rules?.meta?.financial_year || 'unknown FY';
+  throw new Error(`Rules for ${st} (${fy}) not ready: ${status}`);
+}
   // NT polynomial short-circuit (< $525k)
 if (
   String(state).toUpperCase() === 'NT' &&
