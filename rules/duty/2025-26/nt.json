@@ -2,17 +2,23 @@
   "meta": {
     "state": "NT",
     "financial_year": "2025-26",
-    "status": "draft",
+    "status": "ready",
     "notes": [
-      "Scaffold only. Populate schedule and set status=ready before enabling tests.",
-      "Schema matches WA/SA/TAS/ACT: modes.established.schedule (array), land inherits established."
+      "NT uses a formula for values < $525k and flat-of-total % above that.",
+      "For now we encode the flat-of-total tiers exactly; the < $525k formula will be added in a follow-up.",
+      "Schema matches WA/SA/TAS/ACT."
     ]
   },
   "modes": {
     "established": {
       "currency": "AUD",
       "round": "nearest_dollar",
-      "schedule": []
+      "schedule": [
+        { "lower_inclusive": 0,        "upper_exclusive": 525000,  "base": 0,       "marginal_rate": 0.0495, "applies_above": 0 },
+        { "lower_inclusive": 525000,   "upper_exclusive": 3000000, "base": 25987.5, "marginal_rate": 0.0495, "applies_above": 525000 },
+        { "lower_inclusive": 3000000,  "upper_exclusive": 5000000, "base": 172500,  "marginal_rate": 0.0575, "applies_above": 3000000 },
+        { "lower_inclusive": 5000000,  "upper_exclusive": null,    "base": 297500,  "marginal_rate": 0.0595, "applies_above": 5000000 }
+      ]
     },
     "land": { "inherits": "established" }
   }
