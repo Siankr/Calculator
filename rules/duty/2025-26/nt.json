@@ -13,6 +13,7 @@
     "established": {
       "currency": "AUD",
       "round": "nearest_dollar",
+      "formula": { "type": "nt_poly", "max_applicable": 525000 },
       "schedule": [
         { "lower_inclusive": 0,        "upper_exclusive": 525000,  "base": 0,       "marginal_rate": 0.0495, "applies_above": 0 },
         { "lower_inclusive": 525000,   "upper_exclusive": 3000000, "base": 25987.5, "marginal_rate": 0.0495, "applies_above": 525000 },
