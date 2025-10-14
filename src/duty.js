@@ -71,6 +71,8 @@ function pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region }) {
     }
   }
 
+  if (isPpr && st === "ACT" && rules.modes.ppr) return rules.modes.ppr;
+  
   // 5) Default
   return rules.modes.established;
 }
