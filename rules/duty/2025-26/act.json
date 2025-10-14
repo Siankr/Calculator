@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "state": "ACT",
+    "financial_year": "2025-26",
+    "status": "ready",
+    "notes": [
+      "Owner-occupier (ppr) lower tier 0.28% up to $260k from 1 Jul 2025.",
+      "General (established) uses investor/non-PPR scale.",
+      "Top tier is flat 4.54% of total above $1,455,000."
+    ]
+  },
+  "modes": {
+    "established": {
+      "currency": "AUD",
+      "round": "nearest_dollar",
+      "schedule": [
+        { "lower_inclusive": 0,        "upper_exclusive": 200000,  "base": 0,      "marginal_rate": 0.0120, "applies_above": 0 },
+        { "lower_inclusive": 200000,   "upper_exclusive": 300000,  "base": 2400,   "marginal_rate": 0.0220, "applies_above": 200000 },
+        { "lower_inclusive": 300000,   "upper_exclusive": 500000,  "base": 4600,   "marginal_rate": 0.0340, "applies_above": 300000 },
+        { "lower_inclusive": 500000,   "upper_exclusive": 750000,  "base": 11400,  "marginal_rate": 0.0432, "applies_above": 500000 },
+        { "lower_inclusive": 750000,   "upper_exclusive": 1000000, "base": 22200,  "marginal_rate": 0.0590, "applies_above": 750000 },
+        { "lower_inclusive": 1000000,  "upper_exclusive": 1455000, "base": 36950,  "marginal_rate": 0.0640, "applies_above": 1000000 },
+        { "lower_inclusive": 1455000,  "upper_exclusive": null,    "base": 0,      "marginal_rate": 0.0454, "applies_above": 0 }
+      ]
+    },
+    "ppr": {
+      "currency": "AUD",
+      "round": "nearest_dollar",
+      "schedule": [
+        { "lower_inclusive": 0,        "upper_exclusive": 260000,  "base": 0,     "marginal_rate": 0.0028, "applies_above": 0 },
+        { "lower_inclusive": 260000,   "upper_exclusive": 300000,  "base": 728,   "marginal_rate": 0.0220, "applies_above": 260000 },
+        { "lower_inclusive": 300000,   "upper_exclusive": 500000,  "base": 1608,  "marginal_rate": 0.0340, "applies_above": 300000 },
+        { "lower_inclusive": 500000,   "upper_exclusive": 750000,  "base": 8408,  "marginal_rate": 0.0432, "applies_above": 500000 },
+        { "lower_inclusive": 750000,   "upper_exclusive": 1000000, "base": 19208, "marginal_rate": 0.0590, "applies_above": 750000 },
+        { "lower_inclusive": 1000000,  "upper_exclusive": 1455000, "base": 33958, "marginal_rate": 0.0640, "applies_above": 1000000 },
+        { "lower_inclusive": 1455000,  "upper_exclusive": null,    "base": 0,     "marginal_rate": 0.0454, "applies_above": 0 }
+      ]
+    },
+    "land": { "inherits": "established" }
+  }
+}
