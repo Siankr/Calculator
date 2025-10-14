@@ -119,6 +119,21 @@ const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 153
   assertEqual(got3, 40185, 'TAS $1,000,000');
 }
 
+// ---------- ACT boundary checks (general / non-PPR) ----------
+{
+  // 1) Exact lower threshold at $200,000 → $2,400 (1.20% of 200,000)
+  const act1 = calcDuty({ state: 'ACT', price: 200000 });
+  assertEqual(act1, 2400, 'ACT $200,000 exact');
+
+  // 2) Crossover just above $300,000 (+$100):
+  // Base 4,600 + 3.40% of 100 = 4,603.4 → rounds to $4,603
+  const act2 = calcDuty({ state: 'ACT', price: 300100 });
+  assertEqual(act2, 4603, 'ACT $300,100 crossover');
+
+  // 3) Top bracket example at $2,000,000 (flat 4.54% of total) → $90,800
+  const act3 = calcDuty({ state: 'ACT', price: 2000000 });
+  assertEqual(act3, 90800, 'ACT $2,000,000 flat tier');
+}
 
 // --- Summary & exit ---
 const okAll =
