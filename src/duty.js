@@ -166,9 +166,33 @@ function calcDuty({ state, price, isLand = false, isFhb = false, isPpr = false, 
     }
   }
 
-  const mode = pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region });
-  const rows = resolveModeSchedule(mode, rules);
-  return calcFromRows(rows, price);
+  const st = String(state).toUpperCase();
+
+const mode = pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region });
+const rows = resolveModeSchedule(mode, rules);
+const baseDuty = calcFromRows(rows, price);
+
+// NSW FHBAS (homes + land): full waiver ≤ $800k
+if (isFhb && st === 'NSW') {
+  const zeroCap = 800000;
+  if (price <= zeroCap) return 0;
+  // (Optional) partial concession above zeroCap can be added later.
+}
+
+// QLD FHB step-rebate against PPR: 700k→0 linearly to 800k→full PPR
+if (isFhb && isPpr && st === 'QLD') {
+  const start = 700000, end = 800000;
+  if (price <= start) return 0;
+  if (price >= end) return baseDuty; // full PPR beyond the taper
+
+  // Scale to the PPR duty at the cap (800k), linearly by position in the band
+  const capDuty = calcFromRows(rows, end); // PPR schedule at 800k
+  const t = (price - start) / (end - start); // 0..1
+  return Math.round(capDuty * t);
+}
+
+return baseDuty;
+
 }
 
 // Convenience wrapper (kept for your NSW golden tests)
