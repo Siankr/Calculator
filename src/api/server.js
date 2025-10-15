@@ -260,6 +260,36 @@ app.get('/', (_req, res) => {
 </script>
 </body></html>`);
 });
+// Quick browser calculator: GET /calc?state=QLD&price=750000&isPpr=true&isFhb=true[&isLand=true][&region=metro|non_metro][&contractDate=YYYY-MM-DD]
+function qbool(v){ return v === 'true' || v === '1' || v === 'yes' || v === 'on'; }
+
+app.get('/calc', (req, res) => {
+  try {
+    const state = String(req.query.state || '').toUpperCase();
+    const price = Number(req.query.price);
+    const isPpr = qbool(req.query.isPpr);
+    const isFhb = qbool(req.query.isFhb);
+    const isLand = qbool(req.query.isLand);
+    const region = req.query.region;            // 'metro' | 'non_metro' (WA only)
+    const contractDate = req.query.contractDate || undefined;
+
+    const duty = calcDuty({ state, price, isPpr, isFhb, isLand, region, contractDate });
+    const payload = { state, price, isPpr, isFhb, isLand, region, contractDate };
+
+    const formatted = (typeof duty === 'number')
+      ? duty.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' })
+      : 'n/a';
+
+    res.type('html').send(
+      `<h3>Result</h3>
+       <p><strong>Duty:</strong> ${formatted}</p>
+       <pre>${JSON.stringify({ input: payload, outputs: { duty } }, null, 2)}</pre>
+       <p style="color:#666">Tip: change the query string and refresh.</p>`
+    );
+  } catch (e) {
+    res.status(400).type('html').send(`<p style="color:crimson">Error: ${e.message}</p>`);
+  }
+});
 
 app.listen(PORT, '0.0.0.0', () => console.log(`[calculator-api] listening on :${PORT}`));
 
