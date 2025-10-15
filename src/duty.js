@@ -32,6 +32,47 @@ function loadRules(state) {
   }
   return json;
 }
+function applyFhbConcessions(rules, { price, isPpr, isLand }, baseDuty, mode, rows) {
+  const cfg = rules?.fhb;
+  if (!cfg?.enabled || !Array.isArray(cfg.concessions)) return baseDuty;
+
+  const propType = isLand ? 'land' : 'established';
+
+  for (const c of cfg.concessions) {
+    const when = c.when || {};
+    const propOk = (when.property_type || 'established') === propType;
+    const pprOk = (when.isPpr == null) ? true : (!!isPpr === !!when.isPpr);
+    if (!propOk || !pprOk) continue;
+
+    const from = Number(c.from), to = Number(c.to);
+    if (!(from >= 0 && to > from)) continue;
+
+    if (price <= from) return 0;        // full exemption at/below from
+    if (price >= to) continue;          // outside taper band → leave baseDuty
+
+    const t = (price - from) / (to - from); // 0..1 ramp
+
+    // Determine the target (what we are tapering *to*)
+    let targetDuty = baseDuty;
+
+    if (c.type === 'linear_to_full') {
+      let basisRows = rows; // default: current mode
+      if (c.basis === 'general')   basisRows = resolveModeSchedule(rules.modes.established, rules);
+      if (c.basis === 'ppr')       basisRows = resolveModeSchedule(rules.modes.ppr, rules);
+      targetDuty = calcFromRows(basisRows, price);
+    } else if (c.type === 'linear_to_cap' && c.cap?.price) {
+      const capMode =
+        (c.cap.mode === 'ppr') ? resolveModeSchedule(rules.modes.ppr, rules) : rows;
+      targetDuty = calcFromRows(capMode, Number(c.cap.price));
+    } else {
+      continue; // unknown type → ignore
+    }
+
+    return Math.round(targetDuty * t);
+  }
+
+  return baseDuty;
+}
 
 // NT polynomial (< $525k)
 function calcDutyNtPoly(price) {
