@@ -1,38 +1,92 @@
-const fs = require("fs");
-const path = require("path");
+// src/duty.js
+const fs = require('fs');
+const path = require('path');
 
-// --- Load rules by state (2025-26). Extend the map as you add more states.
-function loadRules(state, contractDate) {
-  const fileMap = {
-  NSW: "nsw.json",
-  VIC: "vic.json",
-  QLD: "qld.json",
-  WA:  "wa.json",
-  SA:  "sa.json",
-  TAS: "tas.json",
-  ACT: "act.json",
-  NT:  "nt.json"
+// ---- config ----
+const RULES_ROOT = path.join(__dirname, '..', 'rules', 'duty', '2025-26');
+
+const STATE_FILES = {
+  nsw: 'nsw.json',
+  vic: 'vic.json',
+  qld: 'qld.json',
+  wa:  'wa.json',
+  sa:  'sa.json',
+  tas: 'tas.json',
+  act: 'act.json',
+  nt:  'nt.json'
+  // more later…
 };
-  const key = String(state || "").toUpperCase();
-  const file = fileMap[key];
-  if (!file) throw new Error(`Unsupported state: ${state}`);
-  const p = path.join(__dirname, "..", "rules", "duty", "2025-26", file);
-  return JSON.parse(fs.readFileSync(p, "utf8"));
- 
-function loadStateRules(state) {
-  const file = STATE_FILES[state.toLowerCase()];
+
+// ---- helpers ----
+function loadRules(state) {
+  const key = String(state || '').toLowerCase();
+  const file = STATE_FILES[key];
   if (!file) throw new Error(`Unsupported state: ${state}`);
   const full = path.join(RULES_ROOT, file);
   const raw = fs.readFileSync(full, 'utf8');
-  const json = JSON.parse(raw);
+  let json;
+  try {
+    json = JSON.parse(raw);
+  } catch (e) {
+    throw new Error(`Failed to parse ${file}: ${e.message}`);
+  }
   return json;
 }
+
+// NT polynomial (< $525k)
 function calcDutyNtPoly(price) {
-  const V = price / 1000; // value in thousands
-  // Round to nearest dollar to match your existing guardrails
+  const V = price / 1000; // thousands
   return Math.round(0.06571441 * V * V + 15 * V);
 }
 
+// Resolve a mode to its effective schedule rows (handles inherits)
+function resolveModeSchedule(mode, rules) {
+  // Follow simple inherits chain once
+  let m = mode;
+  if ((!m || (!m.schedule && !m.brackets)) && m && m.inherits && rules?.modes?.[m.inherits]) {
+    m = rules.modes[m.inherits];
+  }
+  // Accept: array; {schedule: array}; {schedule:{brackets:array}}; {brackets:array}
+  if (Array.isArray(m)) return m;
+  if (m && Array.isArray(m.schedule)) return m.schedule;
+  if (m && m.schedule && Array.isArray(m.schedule.brackets)) return m.schedule.brackets;
+  if (m && Array.isArray(m.brackets)) return m.brackets;
+  return [];
+}
+
+// Normalise row shapes (WA/SA/ACT/TAS vs legacy)
+function normaliseRows(rows) {
+  // Expect either:
+  // - WA-style: { lower_inclusive, upper_exclusive, base, marginal_rate, applies_above }
+  // - Legacy:   { to|up_to|max, base, rate }  (lower bound = prev upper, applies_above = lower bound)
+  let lower = 0;
+  return rows.map((r, idx) => {
+    const hasWA = r.hasOwnProperty('lower_inclusive') || r.hasOwnProperty('upper_exclusive') || r.hasOwnProperty('marginal_rate');
+    const to = (r.to ?? r.up_to ?? r.max ?? r.upper_exclusive ?? null);
+    const li = hasWA ? Number(r.lower_inclusive ?? lower) : Number(idx === 0 ? 0 : lower);
+    const ue = to === null ? null : Number(to);
+    const rate = Number(r.marginal_rate ?? r.rate ?? 0);
+    const base = Number(r.base ?? 0);
+    const applies = Number(r.applies_above ?? li);
+    // update lower for next row if legacy
+    lower = ue ?? lower;
+    return { lower_inclusive: li, upper_exclusive: ue, base, rate, applies_above: applies };
+  });
+}
+
+// Core calculator for a list of rows
+function calcFromRows(rows, price) {
+  const nrows = normaliseRows(rows);
+  if (!nrows.length) throw new Error('Empty or invalid schedule');
+  // Find the first row where price < upper_exclusive (or upper_exclusive == null)
+  const idx = nrows.findIndex(r => r.upper_exclusive == null ? true : price < r.upper_exclusive);
+  const i = idx === -1 ? (nrows.length - 1) : idx;
+  const row = nrows[i];
+  const duty = row.base + row.rate * (price - row.applies_above);
+  return Math.round(duty);
+}
+
+// Pick a duty mode based on inputs
 function pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region }) {
   const st = String(state).toUpperCase();
 
@@ -61,6 +115,11 @@ function pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region }) {
     return rules.modes.ppr;
   }
 
+  // 3b) ACT PPR (owner-occupier)
+  if (isPpr && st === "ACT" && rules.modes.ppr) {
+    return rules.modes.ppr;
+  }
+
   // 4) WA FHOR (homes) — region-aware caps; above cap fall back to established
   if (isFhb && st === "WA") {
     const isMetro = String(region || "metro").toLowerCase() === "metro";
@@ -71,128 +130,54 @@ function pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region }) {
     }
   }
 
-  if (isPpr && st === "ACT" && rules.modes.ppr) return rules.modes.ppr;
-  
   // 5) Default
   return rules.modes.established;
 }
 
-
-function calcBaseDuty(price, schedule) {
-  const tier = schedule.schedule.find(t =>
-    t.upper_exclusive === null
-      ? price >= t.lower_inclusive
-      : price >= t.lower_inclusive && price < t.upper_exclusive
-  );
-  if (!tier) throw new Error("No duty tier matched (check schedule)");
-  const amount = tier.base + tier.marginal_rate * (price - tier.applies_above);
-  return amount;
+// Public: base+rate directly from a schedule/mode container
+function calcDutyFromBrackets(price, scheduleOrMode, rulesForInherits) {
+  const rows = resolveModeSchedule(scheduleOrMode, rulesForInherits ? { modes: rulesForInherits.modes } : {});
+  return calcFromRows(rows, price);
 }
 
-function applyFHB(price, baseDuty, rules, isLand, isFhb, { state, isPpr }) {
-  if (!isFhb || !rules.fhb || !rules.fhb.enabled) return baseDuty;
+// Main calculator
+function calcDuty({ state, price, isLand = false, isFhb = false, isPpr = false, region = 'metro', contractDate }) {
+  if (!state) throw new Error('state is required');
+  if (typeof price !== 'number') throw new Error('price must be a number');
 
-  const type = isLand ? "land" : "established";
-  const fhbRule = (rules.fhb.rules || []).find(r => r.property_type === type);
-  if (!fhbRule) return baseDuty;
+  const rules = loadRules(state);
 
-  const {
-    full_exemption_upto,
-    concession_to,
-    concession_formula,
-    step_amount,
-    step_interval,
-    rebate_base_reference
-  } = fhbRule;
-
-  // 1) Full exemption threshold (all states that have it)
-  if (price <= (full_exemption_upto ?? 0)) return 0;
-
-  // 2) Linear phase-out (e.g., NSW, VIC)
-  if (concession_formula === "linear" && concession_to && price < concession_to) {
-    const ratio = (concession_to - price) / (concession_to - full_exemption_upto);
-    return baseDuty * (1 - ratio);
-  }
-
-  // 3) “Full at/below” only (no concession above)
-  if (concession_formula === "full_at_or_below_threshold") {
-    return baseDuty; // already handled ≤ threshold above
-  }
-
-  // 4) QLD: step_10k_rebate
-  // Rebate applies against duty calculated under the referenced schedule (usually "ppr"),
-  // starting from the duty at the full exemption threshold, then reducing by a fixed amount
-  // ($1,735) per $10k above $700k, until $800k (duty never < 0).
-  if (concession_formula === "step_10k_rebate" && concession_to && price < concession_to) {
-    // Choose the reference schedule (e.g., "ppr") to compute the duty to be rebated
-    const refMode = rules.modes[rebate_base_reference] || rules.modes.established;
-    if (!refMode || !refMode.schedule) return baseDuty;
-
-    // Helper: duty using an explicit schedule object
-    const dutyFromSchedule = (p) => {
-      const tier = refMode.schedule.find(t =>
-        t.upper_exclusive === null ? p >= t.lower_inclusive : (p >= t.lower_inclusive && p < t.upper_exclusive)
-      );
-      if (!tier) throw new Error("No duty tier matched for rebate reference schedule");
-      return tier.base + tier.marginal_rate * (p - tier.applies_above);
-    };
-
-    // Duty at current price under the reference (home-concession) schedule
-    const dutyAtPriceRef = dutyFromSchedule(price);
-
-    // Maximum rebate equals the duty (under the reference schedule) at the exemption threshold
-    const maxRebate = dutyFromSchedule(full_exemption_upto);
-
-    // Number of $10k steps above the threshold (ceil so any $1 over counts as a full step)
-    const steps = Math.ceil((price - full_exemption_upto) / (step_interval || 10000));
-
-    // Rebate tapers down by $1,735 per $10k step
-    const rebate = Math.max(0, maxRebate - steps * (step_amount || 1735));
-
-    // Net duty cannot be negative
-    const net = Math.max(0, dutyAtPriceRef - rebate);
-
-    // Return the rounded result (rounding also happens at the very end, but safe to return raw)
-    return net;
-  }
-
-  // 5) Past the concession range → no FHB reduction
-  return baseDuty;
-}
-
-
-function roundNearestDollar(x) {
-  return Math.round(x);
-}
-
-// Generic calculator (state-aware)
-function calcDuty({ state = "NSW", price, isLand = false, isPpr = false, isFhb = false, region = "metro", contractDate = "2025-10-10" }) {
-  const rules = loadRules(state, contractDate);
+  // Guard: block using draft rules
   const status = rules?.meta?.status || 'ready';
-if (status !== 'ready') {
-  const st = (rules?.meta?.state || state || '').toString().toUpperCase();
-  const fy = rules?.meta?.financial_year || 'unknown FY';
-  throw new Error(`Rules for ${st} (${fy}) not ready: ${status}`);
-}
-  // NT polynomial short-circuit (< $525k)
-if (
-  String(state).toUpperCase() === 'NT' &&
-  rules?.modes?.established?.formula?.type === 'nt_poly'
-) {
-  const cap = Number(rules.modes.established.formula.max_applicable || Infinity);
-  if (price <= cap) {
-    return calcDutyNtPoly(price);
+  if (status !== 'ready') {
+    const st = (rules?.meta?.state || state || '').toString().toUpperCase();
+    const fy = rules?.meta?.financial_year || 'unknown FY';
+    throw new Error(`Rules for ${st} (${fy}) not ready: ${status}`);
   }
-}
-  const schedule = pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region });
-  const base = calcBaseDuty(price, schedule);
-  const withFhb = applyFHB(price, base, rules, isLand, isFhb, { state, isPpr });
-  return roundNearestDollar(withFhb);
+
+  // NT polynomial short-circuit (< $525k)
+  if (
+    String(state).toUpperCase() === 'NT' &&
+    rules?.modes?.established?.formula?.type === 'nt_poly'
+  ) {
+    const cap = Number(rules.modes.established.formula.max_applicable || Infinity);
+    if (price <= cap) {
+      return calcDutyNtPoly(price);
+    }
+  }
+
+  const mode = pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region });
+  const rows = resolveModeSchedule(mode, rules);
+  return calcFromRows(rows, price);
 }
 
-// Backward-compatible NSW wrapper (keeps existing tests working)
-function calcDutyNSW(args) {
-  return calcDuty({ state: "NSW", ...args });
+// Convenience wrapper (kept for your NSW golden tests)
+function calcDutyNSW({ price, isLand = false, isFhb = false, contractDate }) {
+  return calcDuty({ state: 'NSW', price, isLand, isFhb, isPpr: false, region: 'metro', contractDate });
 }
 
-module.exports = { calcDuty, calcDutyNSW };
+module.exports = {
+  calcDuty,
+  calcDutyNSW,
+  calcDutyFromBrackets
+};
