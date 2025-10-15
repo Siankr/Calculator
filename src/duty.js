@@ -32,11 +32,15 @@ function loadRules(state) {
   }
   return json;
 }
-function applyFhbConcessions(rules, { price, isPpr, isLand }, baseDuty, mode, rows) {
+function applyFhbConcessions(rules, { price, isPpr, isLand, isFhb }, baseDuty, mode, rows) {
+  // Only apply if the buyer is FHB
+  if (!isFhb) return baseDuty;
+
   const cfg = rules?.fhb;
   if (!cfg?.enabled || !Array.isArray(cfg.concessions)) return baseDuty;
 
   const propType = isLand ? 'land' : 'established';
+  // ...rest of the function unchanged...
 
   for (const c of cfg.concessions) {
     const when = c.when || {};
