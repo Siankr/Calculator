@@ -217,9 +217,25 @@ return baseDuty;
 function calcDutyNSW({ price, isLand = false, isFhb = false, contractDate }) {
   return calcDuty({ state: 'NSW', price, isLand, isFhb, isPpr: false, region: 'metro', contractDate });
 }
+function getStateFeatures(state) {
+  const rules = loadRules(state);
+  // Prefer explicit flag; fall back to presence of a PPR mode
+  const supportsPpr =
+    (typeof rules?.meta?.supports_ppr === 'boolean')
+      ? rules.meta.supports_ppr
+      : !!rules?.modes?.ppr;
+
+  return {
+    state: (rules?.meta?.state || String(state).toUpperCase()),
+    financial_year: rules?.meta?.financial_year || null,
+    supports_ppr: supportsPpr
+  };
+}
 
 module.exports = {
   calcDuty,
   calcDutyNSW,
-  calcDutyFromBrackets
+  calcDutyFromBrackets,
+  getStateFeatures
 };
+
