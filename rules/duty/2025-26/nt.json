@@ -3,6 +3,7 @@
     "state": "NT",
     "financial_year": "2025-26",
     "status": "ready",
+    "supports_ppr": false,
     "notes": [
       "NT uses a formula for values < $525k and flat-of-total % above that.",
       "For now we encode the flat-of-total tiers exactly; the < $525k formula will be added in a follow-up.",
