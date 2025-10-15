@@ -3,6 +3,7 @@
     "state": "TAS",
     "financial_year": "2025-26",
     "status": "ready",
+    "supports_ppr": false,
     "notes": [
       "WA/SA-style schema: lower_inclusive, upper_exclusive, base, marginal_rate, applies_above.",
       "Rounding: nearest dollar (engine handles Math.round).",
