@@ -33,6 +33,15 @@
   },
   "fhb": {
     "enabled": true,
+    "concessions": [
+    {
+      "when": { "isPpr": true, "property_type": "established" },
+      "type": "linear_to_full",
+      "from": 600000,
+      "to": 750000,
+      "basis": "general"
+    }
+  ],
     "rules": [
       {
         "property_type": "established",
