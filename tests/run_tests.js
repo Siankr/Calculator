@@ -176,6 +176,35 @@ const waLandOK = (waLand350 === 0) && (waLand400 === 7695) && (waLand450 === 153
   assertEqual(nt3, 357000, 'NT $6,000,000 (flat 5.95%)');
 }
 
+// ---------- NSW FHB partial concession (800k–1.0m) ----------
+{
+  // 800k remains 0 (already covered by goldens)
+  const nswStd900 = calcDuty({ state: 'NSW', price: 900000 }); // standard
+  const nswFhb900 = calcDuty({ state: 'NSW', price: 900000, isFhb: true });
+  // 900k is midpoint of 800–1000 => ~50% of standard
+  assertEqual(nswFhb900, Math.round(nswStd900 * 0.5), 'NSW FHB @ $900k = 50% standard');
+
+  const nswStd1000 = calcDuty({ state: 'NSW', price: 1000000 });
+  const nswFhb1000 = calcDuty({ state: 'NSW', price: 1000000, isFhb: true });
+  assertEqual(nswFhb1000, nswStd1000, 'NSW FHB @ $1.0m = full standard');
+}
+
+// ---------- VIC FHB (PPR) 0 to full between 600k–750k ----------
+{
+  const vicFhb600 = calcDuty({ state: 'VIC', price: 600000, isPpr: true, isFhb: true });
+  assertEqual(vicFhb600, 0, 'VIC FHB PPR @ $600k = 0');
+
+  const vicStd750 = calcDuty({ state: 'VIC', price: 750000, isPpr: false });
+  const vicFhb750 = calcDuty({ state: 'VIC', price: 750000, isPpr: true, isFhb: true });
+  assertEqual(vicFhb750, vicStd750, 'VIC FHB PPR @ $750k = full general duty');
+
+  // Midpoint at $675k should be ~50% of general duty at 675k
+  const vicStd675 = calcDuty({ state: 'VIC', price: 675000, isPpr: false });
+  const vicFhb675 = calcDuty({ state: 'VIC', price: 675000, isPpr: true, isFhb: true });
+  assertEqual(vicFhb675, Math.round(vicStd675 * 0.5), 'VIC FHB PPR @ $675k ≈ 50% general');
+}
+
+
 // --- Summary & exit ---
 const okAll =
   _schemaAllOK &&
