@@ -212,6 +212,10 @@ function calcDuty({ state, price, isLand = false, isFhb = false, isPpr = false, 
 const mode = pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region });
 const rows = resolveModeSchedule(mode, rules);
 const baseDuty = calcFromRows(rows, price);
+  
+// JSON-driven FHB (VIC/QLD and any future states using this schema)
+const dutyViaJsonFhb = applyFhbConcessions(rules, { price, isPpr, isLand }, baseDuty, mode, rows);
+if (dutyViaJsonFhb !== baseDuty) return dutyViaJsonFhb;
 
 // NSW FHBAS (homes + land): full waiver ≤ $800k; linear concession to $1.0m
 if (isFhb && st === 'NSW') {
