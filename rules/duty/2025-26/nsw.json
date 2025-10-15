@@ -3,6 +3,13 @@
   "rules_version": "2025.07.01-NSW-v1",
   "effective_from": "2025-07-01",
   "effective_to": "2026-06-30",
+  "meta": {
+  "state": "NSW",
+  "financial_year": "2025-26",
+  "status": "ready",
+  "supports_ppr": false,
+  "notes": [ ... ]
+}
   "rounding": "nearest_dollar",
   "modes": {
     "established": {
