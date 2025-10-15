@@ -3,6 +3,7 @@
     "state": "ACT",
     "financial_year": "2025-26",
     "status": "ready",
+    "supports_ppr": false,
     "notes": [
       "Owner-occupier (ppr) lower tier 0.28% up to $260k from 1 Jul 2025.",
       "General (established) uses investor/non-PPR scale.",
