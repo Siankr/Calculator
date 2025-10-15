@@ -87,6 +87,114 @@ app.post('/calculate', (req, res) => {
   }
 });
 
+// minimal demo UI at GET /
+app.get('/', (_req, res) => {
+  res.type('html').send(`<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>AU Duty Calculator (Demo)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 40px auto; }
+    fieldset { border: 1px solid #eee; border-radius: 12px; padding: 16px; }
+    label { display:block; margin: 8px 0; }
+    button { padding: 8px 14px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .muted { color: #666; font-size: 12px; }
+    pre { background:#fafafa; padding:12px; border-radius:8px; overflow:auto; }
+  </style>
+</head>
+<body>
+  <h2>AU Transfer Duty (Demo)</h2>
+  <form id="calcForm">
+    <fieldset>
+      <div class="row">
+        <label>State
+          <select name="state" id="state">
+            <option>NSW</option><option>VIC</option><option>QLD</option><option>WA</option>
+            <option>SA</option><option>TAS</option><option>ACT</option><option>NT</option>
+          </select>
+        </label>
+        <label>Price (AUD)
+          <input type="number" name="price" id="price" value="750000" step="1000" min="1" />
+        </label>
+      </div>
+      <label><input type="checkbox" id="isFhb" /> First-home buyer</label>
+      <label><input type="checkbox" id="isPpr" /> Owner-occupier (PPR) <span class="muted" id="pprNote"></span></label>
+      <label><input type="checkbox" id="isLand" /> Vacant land</label>
+      <label id="waRegion" style="display:none;">WA region
+        <select id="region"><option value="metro">Metro/Peel</option><option value="non_metro">Outside Metro</option></select>
+      </label>
+      <label>Contract date (optional)
+        <input type="date" id="contractDate" />
+      </label>
+      <button type="submit">Calculate</button>
+    </fieldset>
+  </form>
+
+  <h3>Result</h3>
+  <div id="out"><em class="muted">Enter inputs and click Calculate.</em></div>
+
+  <script>
+    const stateSel = document.getElementById('state');
+    const priceEl  = document.getElementById('price');
+    const isFhbEl  = document.getElementById('isFhb');
+    const isPprEl  = document.getElementById('isPpr');
+    const isLandEl = document.getElementById('isLand');
+    const regionEl = document.getElementById('region');
+    const waRegion = document.getElementById('waRegion');
+    const pprNote  = document.getElementById('pprNote');
+    const out      = document.getElementById('out');
+
+    let features = {};
+    fetch('/states').then(r=>r.json()).then(d=>{
+      (d.states||[]).forEach(s => { features[s.state] = s; });
+      applyStateUI();
+    });
+
+    function applyStateUI() {
+      const st = stateSel.value;
+      waRegion.style.display = (st === 'WA') ? '' : 'none';
+      const supportsPpr = !!(features[st] && features[st].supports_ppr);
+      isPprEl.disabled = !supportsPpr;
+      if (!supportsPpr) { isPprEl.checked = false; pprNote.textContent = '(not applicable)'; }
+      else { pprNote.textContent = ''; }
+    }
+    stateSel.addEventListener('change', applyStateUI);
+
+    document.getElementById('calcForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      out.innerHTML = '<em class="muted">Calculating…</em>';
+      const payload = {
+        state: stateSel.value,
+        price: Number(priceEl.value),
+        isFhb: isFhbEl.checked,
+        isPpr: isPprEl.checked,
+        isLand: isLandEl.checked,
+        region: (stateSel.value === 'WA') ? regionEl.value : undefined,
+        contractDate: document.getElementById('contractDate').value || undefined
+      };
+      try {
+        const res = await fetch('/calculate', {
+          method: 'POST', headers: {'content-type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Calculation failed');
+        const duty = json?.outputs?.duty;
+        const formatted = (typeof duty === 'number')
+          ? duty.toLocaleString('en-AU', { style:'currency', currency:'AUD' })
+          : 'n/a';
+        out.innerHTML = '<pre>'+JSON.stringify(json, null, 2)+'</pre><p><strong>Duty:</strong> '+formatted+'</p>';
+      } catch (err) {
+        out.innerHTML = '<p style="color:crimson">Error: '+(err.message||err)+'</p>';
+      }
+    });
+  </script>
+</body>
+</html>`);
+});
+
 /** Start server */
 const PORT = process.env.PORT || 8787;
 app.listen(PORT, () => {
