@@ -197,6 +197,70 @@ app.get('/', (_req, res) => {
 
 /** Start server */
 const PORT = process.env.PORT || 8787;
+// minimal demo UI at GET /
+app.get('/', (_req, res) => {
+  res.type('html').send(`<!doctype html>
+<html><head><meta charset="utf-8"/><title>Duty Demo</title>
+<style>body{font-family:system-ui;margin:2rem auto;max-width:640px}label{display:block;margin:.5rem 0}pre{background:#fafafa;padding:12px;border-radius:8px}</style>
+</head><body>
+<h2>AU Transfer Duty (Demo)</h2>
+<form id="f">
+  <label>State
+    <select id="state">
+      <option>NSW</option><option>VIC</option><option>QLD</option><option>WA</option>
+      <option>SA</option><option>TAS</option><option>ACT</option><option>NT</option>
+    </select>
+  </label>
+  <label>Price (AUD) <input id="price" type="number" value="750000" step="1000" min="1"></label>
+  <label><input id="isFhb" type="checkbox"> First-home buyer</label>
+  <label><input id="isPpr" type="checkbox"> Owner-occupier (PPR) <span id="pprNote" style="color:#666;font-size:.85em"></span></label>
+  <label><input id="isLand" type="checkbox"> Vacant land</label>
+  <label id="waRow" style="display:none">WA region
+    <select id="region"><option value="metro">Metro/Peel</option><option value="non_metro">Outside Metro</option></select>
+  </label>
+  <label>Contract date (optional) <input id="contractDate" type="date"></label>
+  <button>Calculate</button>
+</form>
+<h3>Result</h3>
+<div id="out"><em>Enter inputs and click Calculate.</em></div>
+<script>
+  const qs = id => document.getElementById(id);
+  const features = {};
+  fetch('/states').then(r=>r.json()).then(d => {
+    (d.states||[]).forEach(s => { features[s.state] = s; });
+    applyStateUI();
+  });
+  function applyStateUI(){
+    const st = qs('state').value;
+    qs('waRow').style.display = st==='WA' ? '' : 'none';
+    const supportsPpr = !!(features[st] && features[st].supports_ppr);
+    qs('isPpr').disabled = !supportsPpr;
+    qs('pprNote').textContent = supportsPpr ? '' : '(not applicable)';
+    if (!supportsPpr) qs('isPpr').checked = false;
+  }
+  qs('state').addEventListener('change', applyStateUI);
+  qs('f').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    qs('out').innerHTML = '<em>Calculating…</em>';
+    const payload = {
+      state: qs('state').value,
+      price: Number(qs('price').value),
+      isFhb: qs('isFhb').checked,
+      isPpr: qs('isPpr').checked,
+      isLand: qs('isLand').checked,
+      region: qs('state').value==='WA' ? qs('region').value : undefined,
+      contractDate: qs('contractDate').value || undefined
+    };
+    const res = await fetch('/calculate', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(payload) });
+    const json = await res.json();
+    if (!res.ok) { qs('out').innerHTML = '<span style="color:crimson">Error: '+(json.error||'failed')+'</span>'; return; }
+    const duty = json?.outputs?.duty;
+    qs('out').innerHTML = '<pre>'+JSON.stringify(json, null, 2)+'</pre><p><strong>Duty:</strong> '+(typeof duty==='number'? duty.toLocaleString('en-AU',{style:'currency',currency:'AUD'}) : 'n/a')+'</p>';
+  });
+</script>
+</body></html>`);
+});
+
 app.listen(PORT, '0.0.0.0', () => console.log(`[calculator-api] listening on :${PORT}`));
 
 
