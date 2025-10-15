@@ -29,7 +29,7 @@ function _schemaCheckState(code) {
   console.log(`✅ ${code.toUpperCase()} schedule schema OK`);
   return true;
 }
-const _schemaAllOK = ['sa', 'tas', 'act', 'nt'].every(_schemaCheckState);
+const _schemaAllOK = ['nsw','vic','qld','wa','sa','tas','act','nt'].every(_schemaCheckState);
 
 // --- NSW golden tests ---
 const testsPath = path.join(__dirname, 'golden_nsw.json');
