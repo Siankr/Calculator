@@ -3,7 +3,7 @@
     "state": "SA",
     "financial_year": "2025-26",
     "status": "ready",
-    "supports_ppr": false
+    "supports_ppr": false,
     "notes": [
       "Matches engine row schema used by WA: lower_inclusive, upper_exclusive, base, marginal_rate, applies_above.",
       "Land mode inherits established so isLand works the same way as other states."
