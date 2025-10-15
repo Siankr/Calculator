@@ -172,13 +172,31 @@ const mode = pickSchedule(rules, { state, price, isLand, isPpr, isFhb, region })
 const rows = resolveModeSchedule(mode, rules);
 const baseDuty = calcFromRows(rows, price);
 
-// NSW FHBAS (homes + land): full waiver ≤ $800k
+// NSW FHBAS (homes + land): full waiver ≤ $800k; linear concession to $1.0m
 if (isFhb && st === 'NSW') {
   const zeroCap = 800000;
+  const taperEnd = 1000000;
   if (price <= zeroCap) return 0;
-  // (Optional) partial concession above zeroCap can be added later.
+  if (price < taperEnd) {
+    const t = (price - zeroCap) / (taperEnd - zeroCap); // 0..1
+    return Math.round(baseDuty * t);
+  }
+}
+  
+// VIC FHB (PPR): ≤$600k = 0; $600k–$750k = linear to full GENERAL duty
+if (isFhb && isPpr && st === 'VIC') {
+  const start = 600000, end = 750000;
+  if (price <= start) return 0;
+  if (price < end) {
+    // Use VIC GENERAL (established) schedule as the target
+    const generalRows = resolveModeSchedule(rules.modes.established, rules);
+    const generalDuty = calcFromRows(generalRows, price);
+    const t = (price - start) / (end - start); // 0..1
+    return Math.round(generalDuty * t);
+  }
 }
 
+  
 // QLD FHB step-rebate against PPR: 700k→0 linearly to 800k→full PPR
 if (isFhb && isPpr && st === 'QLD') {
   const start = 700000, end = 800000;
