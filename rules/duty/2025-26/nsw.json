@@ -4,12 +4,11 @@
   "effective_from": "2025-07-01",
   "effective_to": "2026-06-30",
   "meta": {
-  "state": "NSW",
-  "financial_year": "2025-26",
-  "status": "ready",
-  "supports_ppr": false,
-  "notes": [ ... ]
-}
+    "state": "NSW",
+    "financial_year": "2025-26",
+    "status": "ready",
+    "supports_ppr": false
+  },
   "rounding": "nearest_dollar",
   "modes": {
     "established": {
@@ -44,6 +43,13 @@
       }
     ]
   },
-  "surcharges": { "foreign_buyer": { "enabled": false, "rate": 0.00, "base": "dutiable_value", "caps_or_thresholds": [] } },
+  "surcharges": {
+    "foreign_buyer": {
+      "enabled": false,
+      "rate": 0.00,
+      "base": "dutiable_value",
+      "caps_or_thresholds": []
+    }
+  },
   "notes": "NSW duty table + FHB thresholds for 2025–26."
 }
