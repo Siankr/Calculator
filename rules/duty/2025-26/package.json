@@ -2,9 +2,15 @@
   "name": "purchasing-power",
   "version": "0.1.0",
   "type": "commonjs",
-  "scripts": {
-    "examples": "node src/run_examples.js",
-    "test": "node tests/run_tests.js"
-  },
+ "dependencies": {
+  "cors": "^2.8.5",
+  "express": "^4.19.2",
+  "zod": "^3.23.8"
+},
+"scripts": {
+  "start": "node src/api/server.js",
+  "dev": "node src/api/server.js",
+  "test": "node tests/run_tests.js"
+}
   "engines": { "node": ">=18" }
 }
