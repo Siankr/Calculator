@@ -39,6 +39,15 @@
 
   "fhb": {
     "enabled": true,
+    "concessions": [
+    {
+      "when": { "isPpr": true, "property_type": "established" },
+      "type": "linear_to_cap",
+      "from": 700000,
+      "to": 800000,
+      "cap": { "mode": "ppr", "price": 800000 }
+    }
+  ],
     "rules": [
       {
         "property_type": "established",
