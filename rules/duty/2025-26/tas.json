@@ -4,8 +4,9 @@
     "financial_year": "2025-26",
     "status": "ready",
     "notes": [
-      "Matches WA/SA row schema: lower_inclusive, upper_exclusive, base, marginal_rate, applies_above.",
-      "Rates sourced from SRO Tasmania (duty payable on/after 21 Oct 2013)."
+      "WA/SA-style schema: lower_inclusive, upper_exclusive, base, marginal_rate, applies_above.",
+      "Rounding: nearest dollar (engine handles Math.round).",
+      "Land inherits established (no separate land slabs)."
     ]
   },
   "modes": {
