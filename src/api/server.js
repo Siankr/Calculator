@@ -50,12 +50,19 @@ app.get('/features/:state', (req, res) => {
 /** Schema for POST /calculate (duty-first; extend later with LMI options) */
 const CalcBody = z.object({
   state: z.enum(['NSW','VIC','QLD','WA','SA','TAS','ACT','NT']),
-  price: z.number().int().positive(),
+  price: z.number().int().positive().optional(), // optional when solving
   isLand: z.boolean().optional().default(false),
   isFhb: z.boolean().optional().default(false),
   isPpr: z.boolean().optional().default(false),
-  region: z.enum(['metro','non_metro']).optional(), // only used by WA FHOR
-  contractDate: z.string().optional() // ISO date, optional for now
+  region: z.enum(['metro','non_metro']).optional(),
+  contractDate: z.string().optional(),
+
+  // Purchasing-power inputs (optional)
+  borrowingPower: z.number().positive().optional(),
+  depositCash: z.number().nonnegative().optional(),
+  targetLvr: z.number().min(0.5).max(0.95).optional(),
+  lmi_policy: z.enum(['no_lmi','allow_lmi','fhb_guarantee']).optional(),
+  includeOtherGovtFees: z.boolean().optional()
 });
 
 app.post('/calculate', (req, res) => {
