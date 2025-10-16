@@ -72,26 +72,52 @@ app.post('/calculate', (req, res) => {
   }
   const input = parse.data;
 
-  try {
-    // Step 1: duty only (everything you’ve implemented is in calcDuty)
-    const duty = calcDuty(input);
-
-    // Response is versionable; add more fields later without breaking the UI
-    res.json({
-      input,
-      outputs: {
-        duty
-        // lmi: null, // step 2
-        // purchasingPower: null // step 2
-      },
-      meta: {
-        schema: 1,
-        currency: 'AUD'
-      }
-    });
-  } catch (e) {
-    res.status(400).json({ error: e.message });
+try {
+  // Duty (if price provided)
+  let duty = null;
+  if (typeof input.price === 'number') {
+    duty = calcDuty(input);
   }
+
+  // Optional LMI
+  let lmi = null;
+  try {
+    const { calculateLmi } = require('../lmi');
+    const tlvr = Number(input.targetLvr ?? 0.90);
+    if (typeof input.price === 'number') {
+      lmi = calculateLmi({ price: input.price, targetLvr: tlvr, capitalise: true });
+    }
+  } catch (_) {}
+
+  // Optional HGS eligibility (uses price if given)
+  let hgs = null;
+  try {
+    const { checkHgsEligibility } = require('../hgs');
+    if (typeof input.price === 'number') {
+      hgs = checkHgsEligibility({ state: input.state, price: input.price, isFhb: input.isFhb });
+    }
+  } catch (_) {}
+
+  // Optional Purchasing Power (requires borrowingPower)
+  let purchasingPower = null;
+  try {
+    if (typeof input.borrowingPower === 'number') {
+      const { solvePurchasingPower } = require('../purchasingPower');
+      purchasingPower = solvePurchasingPower(input);
+    }
+  } catch (e) {
+    // keep API resilient
+    purchasingPower = { error: e.message };
+  }
+
+  res.json({
+    input,
+    outputs: { duty, lmi, hgs, purchasingPower },
+    meta: { schema: 2, currency: 'AUD' }
+  });
+} catch (e) {
+  res.status(400).json({ error: e.message });
+}
 });
 
 // minimal demo UI at GET /
