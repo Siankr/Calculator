@@ -85,4 +85,14 @@ function solveMaxPrice({
   return Math.round(p);
 }
 
-module.exports = { solveMaxPrice };
+// Backwards-compat: some callers expect `solveMaxPrice`.
+function solveMaxPrice(input) {
+  return solvePurchasingPower(input);
+}
+
+// CommonJS exports
+module.exports = {
+  solvePurchasingPower,
+  solveMaxPrice,
+  default: solvePurchasingPower, // helps if someone does require(...).default
+};
