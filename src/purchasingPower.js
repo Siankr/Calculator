@@ -1,22 +1,26 @@
 // src/purchasingPower.js
+'use strict';
+
 const { calcDuty } = require('./duty');
 
+// Soft deps (guarded requires)
 let lmiFn = null;
-try { lmiFn = require('./lmi').calculateLmi; } catch (_) {}
+try { lmiFn = require('./lmi').calculateLmi; } catch (e) {}
 let hgsFn = null;
-try { hgsFn = require('./hgs').checkHgsEligibility; } catch (_) {}
+try { hgsFn = require('./hgs').checkHgsEligibility; } catch (e) {}
 
 /**
- * Purchasing power solver (v2).
+ * Purchasing power solver (v2, compat-safe).
+ *
  * Policies:
- *  - no_lmi:        max LVR 80%; no LMI; duty/fees paid from cash.
- *  - allow_lmi:     LVR up to targetLvr (≤0.95); LMI premium capitalised (default).
- *  - fhb_guarantee: if eligible at price (HGS caps), NO LMI (up to 95%); else fall back to allow_lmi.
+ *  - 'no_lmi'        → max LVR 80%; no LMI; duty/fees from cash.
+ *  - 'allow_lmi'     → LVR up to targetLvr (≤ 0.95 by policy); LMI premium capitalised (default).
+ *  - 'fhb_guarantee' → if HGS-eligible AT PRICE: no LMI up to 95%; else falls back to 'allow_lmi'.
  *
  * Rules:
- *  - Cash: savings ≥ depositPortion + duty + fees + (non-cap LMI).
- *  - Borrowing: compare BP against BASE loan only (exclude capitalised LMI).
- *  - HGS never caps price; it only toggles LMI on/off at that price.
+ *  - Cash feasibility: savings ≥ depositPortion + duty + fees + (non-capitalised LMI).
+ *  - Borrowing feasibility: compare BP against BASE loan ONLY (exclude capitalised LMI).
+ *  - HGS does NOT cap price; it only toggles LMI on/off at that price.
  */
 function solvePurchasingPower(input) {
   const {
@@ -27,97 +31,122 @@ function solvePurchasingPower(input) {
     lmi_policy = 'allow_lmi', // 'no_lmi' | 'allow_lmi' | 'fhb_guarantee'
     includeOtherGovtFees = false,
     contractDate
-  } = input;
+  } = input || {};
 
   if (!Number.isFinite(borrowingPower) || borrowingPower <= 0) {
     throw new Error('borrowingPower must be a positive number');
   }
 
-  const otherGovtFees = includeOtherGovtFees ? 3000 : 0;
+  // Normalise and validate state early (prevents deep errors inside calcDuty)
+  var stateCode = typeof state === 'string' ? state.trim().toUpperCase() : '';
+  var validStates = { NSW:1, VIC:1, QLD:1, WA:1, SA:1, TAS:1, ACT:1, NT:1 };
+  if (!validStates[stateCode]) {
+    throw new Error('state is required (one of NSW, VIC, QLD, WA, SA, TAS, ACT, NT)');
+  }
+
+  var otherGovtFees = includeOtherGovtFees ? 3000 : 0;
 
   function resolveModeAtPrice(price) {
     if (lmi_policy === 'fhb_guarantee' && hgsFn) {
       try {
-        const h = hgsFn({ state, price, isFhb: !!isFhb });
-        return h && h.eligible ? 'fhb_guarantee' : 'allow_lmi';
-      } catch { return 'allow_lmi'; }
+        var h = hgsFn({ state: stateCode, price: price, isFhb: !!isFhb });
+        return (h && h.eligible) ? 'fhb_guarantee' : 'allow_lmi';
+      } catch (e) {
+        return 'allow_lmi';
+      }
     }
     return lmi_policy;
   }
 
   function policyLvrCap(mode) {
     if (mode === 'no_lmi') return 0.80;
-    return 0.95; // allow_lmi or fhb_guarantee (eligible) up to 95%
+    // allow_lmi or fhb_guarantee (eligible) up to 95%
+    return 0.95;
   }
 
   function feasible(price) {
     if (!Number.isFinite(price) || price <= 0) return { ok: false };
 
-    const mode = resolveModeAtPrice(price);
-    const cap = policyLvrCap(mode);
-    const lvrUsed = Math.min(Math.max(targetLvr, 0.50), cap);
+    var mode = resolveModeAtPrice(price);
+    var cap = policyLvrCap(mode);
+    var lvrUsed = Math.min(Math.max(targetLvr, 0.50), cap);
 
-    const duty = calcDuty({ state, price, isFhb, isPpr, isLand, region, contractDate });
+    // Duty at this price and input flags
+    var duty = calcDuty({
+      state: stateCode,
+      price: price,
+      isFhb: isFhb,
+      isPpr: isPpr,
+      isLand: isLand,
+      region: region,
+      contractDate: contractDate
+    });
 
-    const baseLoan = lvrUsed * price;                 // what servicing/BP is tested against
-    const depositPortion = Math.max(0, price - baseLoan);
+    // Base loan (what servicing/BP is tested against) and deposit portion
+    var baseLoan = lvrUsed * price;
+    var depositPortion = Math.max(0, price - baseLoan);
 
-    // LMI
-    let lmiPrem = 0;
-    let lmiCashPortion = 0;
-    let capitalised = false;
+    // LMI handling
+    var lmiPrem = 0;
+    var lmiCashPortion = 0;
+    var capitalised = false;
 
     if (mode === 'allow_lmi') {
       if (lmiFn) {
         try {
-          const res = lmiFn({ price, targetLvr: lvrUsed, capitalise: true });
-          lmiPrem = Math.max(0, Number(res?.premium || 0));
-          capitalised = res?.capitalised !== false; // default true
-        } catch { lmiPrem = 0; capitalised = true; }
+          var res = lmiFn({ price: price, targetLvr: lvrUsed, capitalise: true });
+          var resPrem = res && typeof res.premium === 'number' ? res.premium : 0;
+          lmiPrem = Math.max(0, Number(resPrem));
+          var resCap = res && typeof res.capitalised !== 'undefined' ? !!res.capitalised : true;
+          capitalised = resCap;
+        } catch (e) {
+          lmiPrem = Math.round(price * 0.02); // coarse fallback
+          capitalised = true;
+        }
       } else {
-        lmiPrem = Math.round(price * 0.02); // coarse fallback
+        lmiPrem = Math.round(price * 0.02);   // coarse fallback if no lmi.js yet
         capitalised = true;
       }
       lmiCashPortion = capitalised ? 0 : lmiPrem;
     } else {
-      // no_lmi or fhb_guarantee (eligible)
+      // 'no_lmi' or 'fhb_guarantee' (eligible)
       lmiPrem = 0;
       lmiCashPortion = 0;
       capitalised = false;
     }
 
     // Constraints
-    const cashNeeded = depositPortion + duty + otherGovtFees + lmiCashPortion;
-    const cashOK = depositCash >= cashNeeded;
+    var cashNeeded = depositPortion + duty + otherGovtFees + lmiCashPortion; // cash at settlement
+    var cashOK = depositCash >= cashNeeded;
 
-    const bpOK = baseLoan <= borrowingPower;
+    var bpOK = baseLoan <= borrowingPower; // BP compared to base loan only (exclude cap LMI)
 
-    const effectiveLvr = (baseLoan + (capitalised ? lmiPrem : 0)) / price;
+    var effectiveLvr = (baseLoan + (capitalised ? lmiPrem : 0)) / price;
 
     return {
-      ok: cashOK && bpOK,
-      duty,
-      otherGovtFees,
-      depositPortion,
-      lmiPrem,
-      lmiCashPortion,
-      capitalised,
-      baseLoan,
+      ok: (cashOK && bpOK),
+      duty: duty,
+      otherGovtFees: otherGovtFees,
+      depositPortion: depositPortion,
+      lmiPrem: lmiPrem,
+      lmiCashPortion: lmiCashPortion,
+      capitalised: capitalised,
+      baseLoan: baseLoan,
       loanWithCapLmi: baseLoan + (capitalised ? lmiPrem : 0),
-      cashNeeded,
-      effectiveLvr,
-      mode
+      cashNeeded: cashNeeded,
+      effectiveLvr: effectiveLvr,
+      mode: mode
     };
   }
 
-  // Binary search
-  let lo = 1;
-  let hi = Math.max(1, Math.floor((borrowingPower + depositCash) * 1.2));
-  let best = { price: 0, proof: null };
+  // Binary search for max feasible price
+  var lo = 1;
+  var hi = Math.max(1, Math.floor((borrowingPower + depositCash) * 1.2));
+  var best = { price: 0, proof: null };
 
-  for (let i = 0; i < 42; i++) {
-    const mid = Math.floor((lo + hi) / 2);
-    const f = feasible(mid);
+  for (var i = 0; i < 42; i++) {
+    var mid = Math.floor((lo + hi) / 2);
+    var f = feasible(mid);
     if (f.ok) {
       best = { price: mid, proof: f };
       lo = mid + 1;
@@ -128,14 +157,14 @@ function solvePurchasingPower(input) {
   }
 
   if (!best.proof) {
-    const f0 = feasible(1) || {};
+    var f0 = feasible(1) || {};
     return {
       maxPrice: 0,
       explain: {
-        borrowingPower,
-        depositCash,
+        borrowingPower: borrowingPower,
+        depositCash: depositCash,
         dutyAtMax: f0.duty || 0,
-        otherGovtFees,
+        otherGovtFees: otherGovtFees,
         lmiPremiumAtMax: f0.lmiPrem || 0,
         lmiCashPortionAtMax: f0.lmiCashPortion || 0,
         cashNeededAtMax: f0.cashNeeded || 0,
@@ -148,14 +177,14 @@ function solvePurchasingPower(input) {
     };
   }
 
-  const p = best.proof;
+  var p = best.proof;
   return {
     maxPrice: best.price,
     explain: {
-      borrowingPower,
-      depositCash,
+      borrowingPower: borrowingPower,
+      depositCash: depositCash,
       dutyAtMax: p.duty,
-      otherGovtFees,
+      otherGovtFees: otherGovtFees,
       depositRequiredAtMax: p.depositPortion,
       lmiPremiumAtMax: p.lmiPrem,
       lmiCashPortionAtMax: p.lmiCashPortion,
@@ -176,7 +205,7 @@ function solveMaxPrice(input) {
 }
 
 module.exports = {
-  solvePurchasingPower,
-  solveMaxPrice,
-  default: solvePurchasingPower,
+  solvePurchasingPower: solvePurchasingPower,
+  solveMaxPrice: solveMaxPrice,
+  default: solvePurchasingPower
 };
