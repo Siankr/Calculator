@@ -18,6 +18,17 @@ try { hgsFn = require('./hgs').checkHgsEligibility; } catch (_) {}
  *  - Borrowing: compare BP against BASE loan only (exclude capitalised LMI).
  *  - HGS never caps price; it only toggles LMI on/off at that price.
  */
+
+   if (!Number.isFinite(borrowingPower) || borrowingPower <= 0) {
+     throw new Error('borrowingPower must be a positive number');
+   }
++  // Validate state early to avoid deep errors inside calcDuty()
++  const validStates = new Set(['NSW','VIC','QLD','WA','SA','TAS','ACT','NT']);
++  const stateCode = typeof state === 'string' ? state.trim().toUpperCase() : '';
++  if (!validStates.has(stateCode)) {
++    throw new Error(`state is required (one of ${[...validStates].join(', ')})`);
++  }
+
 function solvePurchasingPower(input) {
   const {
     state, isFhb = false, isPpr = false, isLand = false, region,
@@ -38,7 +49,7 @@ function solvePurchasingPower(input) {
   function resolveModeAtPrice(price) {
     if (lmi_policy === 'fhb_guarantee' && hgsFn) {
       try {
-        const h = hgsFn({ state, price, isFhb: !!isFhb });
+        const h = hgsFn({ state: stateCode, price, isFhb: !!isFhb });
         return h && h.eligible ? 'fhb_guarantee' : 'allow_lmi';
       } catch { return 'allow_lmi'; }
     }
@@ -57,7 +68,7 @@ function solvePurchasingPower(input) {
     const cap = policyLvrCap(mode);
     const lvrUsed = Math.min(Math.max(targetLvr, 0.50), cap);
 
-    const duty = calcDuty({ state, price, isFhb, isPpr, isLand, region, contractDate });
+    const duty = calcDuty({ state: stateCode, price, isFhb, isPpr, isLand, region, contractDate });
 
     const baseLoan = lvrUsed * price;                 // what servicing/BP is tested against
     const depositPortion = Math.max(0, price - baseLoan);
