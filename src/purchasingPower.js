@@ -28,7 +28,8 @@ function solvePurchasingPower(input) {
     borrowingPower,
     depositCash = 0,
     targetLvr = 0.90,
-    lmi_policy = 'allow_lmi', // 'no_lmi' | 'allow_lmi' | 'fhb_guarantee'
+    lmi_policy = 'allow_lmi', // 'no_lmi' | 'allow_lmi' | 'fhb_guarantee',
+    lmi_payment = 'capitalise', // 'capitalise' | 'cash' (only used when mode resolves to allow_lmi),
     includeOtherGovtFees = false,
     contractDate
   } = input || {};
@@ -64,80 +65,103 @@ function solvePurchasingPower(input) {
     return 0.95;
   }
 
-  function feasible(price) {
-    if (!Number.isFinite(price) || price <= 0) return { ok: false };
+function feasible(price) {
+  if (!Number.isFinite(price) || price <= 0) return { ok: false };
 
-    var mode = resolveModeAtPrice(price);
-    var cap = policyLvrCap(mode);
-    var lvrUsed = Math.min(Math.max(targetLvr, 0.50), cap);
+  var mode = resolveModeAtPrice(price);
+  var cap = policyLvrCap(mode);
+  var lvrUsed = Math.min(Math.max(targetLvr, 0.50), cap);
 
-    // Duty at this price and input flags
-    var duty = calcDuty({
-      state: stateCode,
-      price: price,
-      isFhb: isFhb,
-      isPpr: isPpr,
-      isLand: isLand,
-      region: region,
-      contractDate: contractDate
-    });
+  // Duty
+  var duty = calcDuty({
+    state: stateCode,
+    price: price,
+    isFhb: isFhb,
+    isPpr: isPpr,
+    isLand: isLand,
+    region: region,
+    contractDate: contractDate
+  });
 
-    // Base loan (what servicing/BP is tested against) and deposit portion
-    var baseLoan = lvrUsed * price;
-    var depositPortion = Math.max(0, price - baseLoan);
+  // Base loan (what servicing/BP is assessed on when LMI is paid in cash)
+  var baseLoan = lvrUsed * price;
+  var depositPortion = Math.max(0, price - baseLoan);
 
-    // LMI handling
-    var lmiPrem = 0;
-    var lmiCashPortion = 0;
-    var capitalised = false;
+  // LMI (only when mode is allow_lmi)
+  var lmiPrem = 0;
+  var capitalised = false;
+  var lmiCashPortion = 0;
+  var lmiPaymentMode = 'none';
 
-    if (mode === 'allow_lmi') {
-      if (lmiFn) {
-        try {
-          var res = lmiFn({ price: price, targetLvr: lvrUsed, capitalise: true });
-          var resPrem = res && typeof res.premium === 'number' ? res.premium : 0;
-          lmiPrem = Math.max(0, Number(resPrem));
-          var resCap = res && typeof res.capitalised !== 'undefined' ? !!res.capitalised : true;
-          capitalised = resCap;
-        } catch (e) {
-          lmiPrem = Math.round(price * 0.02); // coarse fallback
-          capitalised = true;
-        }
-      } else {
-        lmiPrem = Math.round(price * 0.02);   // coarse fallback if no lmi.js yet
-        capitalised = true;
+  if (mode === 'allow_lmi') {
+    lmiPaymentMode = (lmi_payment === 'cash') ? 'cash' : 'capitalise';
+
+    if (lmiFn) {
+      try {
+        var res = lmiFn({ price: price, targetLvr: lvrUsed, capitalise: (lmiPaymentMode === 'capitalise') });
+        var resPrem = res && typeof res.premium === 'number' ? res.premium : 0;
+        lmiPrem = Math.max(0, Number(resPrem));
+      } catch (e) {
+        // coarse fallback
+        lmiPrem = Math.round(price * 0.02);
       }
-      lmiCashPortion = capitalised ? 0 : lmiPrem;
     } else {
-      // 'no_lmi' or 'fhb_guarantee' (eligible)
-      lmiPrem = 0;
-      lmiCashPortion = 0;
-      capitalised = false;
+      lmiPrem = Math.round(price * 0.02); // coarse fallback if lmi.js not present
     }
 
-    // Constraints
-    var cashNeeded = depositPortion + duty + otherGovtFees + lmiCashPortion; // cash at settlement
-    var cashOK = depositCash >= cashNeeded;
-
-    var bpOK = baseLoan <= borrowingPower; // BP compared to base loan only (exclude cap LMI)
-
-    var effectiveLvr = (baseLoan + (capitalised ? lmiPrem : 0)) / price;
-
-    return {
-      ok: (cashOK && bpOK),
-      duty: duty,
-      otherGovtFees: otherGovtFees,
-      depositPortion: depositPortion,
-      lmiPrem: lmiPrem,
-      lmiCashPortion: lmiCashPortion,
-      capitalised: capitalised,
-      baseLoan: baseLoan,
-      loanWithCapLmi: baseLoan + (capitalised ? lmiPrem : 0),
-      cashNeeded: cashNeeded,
-      effectiveLvr: effectiveLvr,
-      mode: mode
-    };
+    if (lmiPaymentMode === 'capitalise') {
+      capitalised = true;
+      lmiCashPortion = 0;
+    } else {
+      capitalised = false;
+      lmiCashPortion = lmiPrem;
+    }
+  } else {
+    // no_lmi or fhb_guarantee (eligible)
+    lmiPrem = 0;
+    lmiCashPortion = 0;
+    capitalised = false;
+    lmiPaymentMode = 'none';
   }
+
+  // ----- Constraints -----
+
+  // LVR constraint:
+  // - If LMI is capitalised, enforce cap on effective LVR after adding premium.
+  // - If LMI is paid from cash (or no LMI), enforce cap on base LVR.
+  var effectiveLvr = (baseLoan + (capitalised ? lmiPrem : 0)) / price;
+  var lvrOK = effectiveLvr <= cap + 1e-9;
+
+  // Cash constraint: savings must cover deposit + duty + fees + (LMI if paid from cash)
+  var cashNeeded = depositPortion + duty + otherGovtFees + lmiCashPortion;
+  var cashOK = depositCash >= cashNeeded;
+
+  // Borrowing/servicing constraint:
+  // - If LMI capitalised, borrower must service baseLoan + lmiPrem.
+  // - If LMI paid from cash (or no LMI), servicing is on baseLoan only.
+  var loanComparedToBP = baseLoan + (capitalised ? lmiPrem : 0);
+  var bpOK = loanComparedToBP <= borrowingPower;
+
+  var ok = lvrOK && cashOK && bpOK;
+
+  return {
+    ok: ok,
+    mode: mode,
+    duty: duty,
+    otherGovtFees: otherGovtFees,
+    depositPortion: depositPortion,
+    lmiPrem: lmiPrem,
+    lmiCashPortion: lmiCashPortion,
+    capitalised: capitalised,
+    lmiPaymentMode: lmiPaymentMode,
+    baseLoan: baseLoan,
+    loanWithCapLmi: baseLoan + (capitalised ? lmiPrem : 0),
+    loanComparedToBP: loanComparedToBP,
+    cashNeeded: cashNeeded,
+    effectiveLvr: effectiveLvr
+  };
+}
+
 
   // Binary search for max feasible price
   var lo = 1;
@@ -187,10 +211,12 @@ function solvePurchasingPower(input) {
       otherGovtFees: otherGovtFees,
       depositRequiredAtMax: p.depositPortion,
       lmiPremiumAtMax: p.lmiPrem,
+      lmiPaymentMode: p.lmiPaymentMode,            // 'capitalise' | 'cash' | 'none'
       lmiCashPortionAtMax: p.lmiCashPortion,
       cashNeededAtMax: p.cashNeeded,
-      loanBaseAtMax: p.baseLoan,
-      loanWithCapLmiAtMax: p.loanWithCapLmi,
+      loanBaseAtMax: p.baseLoan,                   // principal excluding any capitalised LMI
+      loanWithCapLmiAtMax: p.loanWithCapLmi,       // principal including capitalised LMI (if any)
+      loanComparedToBPAtMax: p.loanComparedToBP,   // what we actually compared to BP (depends on lmi_payment)
       lvr_effective: p.effectiveLvr,
       mode: p.mode
     }
